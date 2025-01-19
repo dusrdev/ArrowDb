@@ -1,4 +1,4 @@
-# ArrowDb ![ArrowDb](resources/icon.svg)
+# ArrowDb <img src='/resources/icon.svg' height='30px'>
 
 [![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
 
