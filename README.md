@@ -1,10 +1,9 @@
 <div align="center">
-
-  ![ArrowDb-logo](resources/icon-wide.png)
-
+  ![ArrowDb-logo](resources/logo-wide.png)
 </div>
-
-[![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
+<div align="center">
+  [![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
+</div>
 
 ArrowDb is a fast, lightweight, and type-safe key-value database designed for .NET.
 
@@ -27,7 +26,10 @@ Initializing the db is done via the factory methods, they return the instance as
 // manual instance creation
 var db = await ArrowDb.CreateFromFile("path.db");
 // or with dependency injection
-builder.Services.AddSingleton(() => await ArrowDb.CreateFromFile("path.db"));
+builder.Services.AddSingleton(_ => ArrowDb.CreateFromFile("path.db").GetAwaiter().GetResult());
+// the default DI container doesn't support async, so we hack it with GetAwaiter().GetResult()
+// in the case of ArrowDb FileSerializer, this ValueTask is actually synchronous so this is fine
+// in cases of different serializers, you can use Lazy<T> or other workarounds
 ```
 
 This will either create a new ArrowDb instance, or load an existing one from the specified path, if exists.
@@ -152,7 +154,7 @@ As the example shows retries is the usual way to resolve these conflicts, but cu
 ```csharp
 var db = await ArrowDb.CreateInMemory();
 // or with dependency injection
-builder.Services.AddSingleton(() => await ArrowDb.CreateInMemory());
+builder.Services.AddSingleton(() => ArrowDb.CreateInMemory().GetAwaiter().GetResult());
 // Since this isn’t persisted, you may also use it as a Transient or Scoped service (whatever fits your needs).
 ```
 
