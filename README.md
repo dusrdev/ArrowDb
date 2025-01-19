@@ -1,6 +1,7 @@
 <div align="center">
 
-  ![ArrowDb-logo](resources/logo-wide.png)
+  ![ArrowDb-logo](https://github.com/user-attachments/assets/b90af6b1-8ed0-44dd-a1f5-50a238d6dc14)
+
 
 </div>
 <div align="center">
