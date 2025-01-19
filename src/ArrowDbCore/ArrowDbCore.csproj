@@ -17,8 +17,8 @@
     <PackageId>ArrowDb</PackageId>
     <Title>ArrowDb</Title>
     <Description>A hyper-light performance-oriented NoSQL database</Description>
-    <!-- <PackageProjectUrl>https://github.com/dusrdev/ArrowDb</PackageProjectUrl> -->
-    <!-- <RepositoryUrl>https://github.com/dusrdev/ArrowDb</RepositoryUrl> -->
+    <PackageProjectUrl>https://github.com/dusrdev/ArrowDb</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dusrdev/ArrowDb</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
     <PackageTags>Database;HighPerformance;NoSql;Document;KeyValuePair</PackageTags>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
@@ -32,8 +32,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <!-- <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All"
-    /> -->
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="8.0.0" PrivateAssets="All" />
   </ItemGroup>
 
   <ItemGroup>
