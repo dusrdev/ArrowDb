@@ -1,8 +1,12 @@
 <div align="center">
+
   ![ArrowDb-logo](resources/logo-wide.png)
+
 </div>
 <div align="center">
+
   [![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
+  
 </div>
 
 ArrowDb is a fast, lightweight, and type-safe key-value database designed for .NET.
