@@ -5,7 +5,9 @@
 </div>
 <div align="center">
 
-  [![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
+  [![NuGet Downloads](https://img.shields.io/nuget/dt/ArrowDb?style=flat&label=Nuget%20-%20ArrowDb)](https://www.nuget.org/packages/ArrowDb)
+  [![Unit Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml)
+  [![Integrity Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml)
   
 </div>
 
@@ -150,6 +152,38 @@ do {
 ```
 
 As the example shows retries is the usual way to resolve these conflicts, but custom logic can also be used, you can simply reject the operation, and also use other loops or even `goto` statements if you are brave enough.
+
+## `ReadOnlySpan<char>` Key Generation
+
+`ArrowDb` APIs use `ReadOnlySpan<char>` for keys to minimize unnecessary string allocations. Usually using the API with `Upsert` doesn't require specific logic as string can also be interpreted as `ReadOnlySpan<char>`, however when checking if a key exists or removing keys, usually you don't have pre-existing reference to the key, which means you have to use rather low level APIs to efficiently generate a `ReadOnlySpan<char>` key.
+
+To make this process much easier, and help with type safety, `ArrowDb` exposes a static `GenerateTypedKey<T>` method that accepts the type of the value, specific key (identifier) and a buffer, it returns a `ReadOnlySpan<char>` key that prefixes the type to the specific key.
+
+For example, if you have a `Person` class (from examples above):
+
+```csharp
+// we need a buffer (we can rent one from a pool, or allocate it ourselves)
+// in this example we will rent memory
+using var memoryOwner = MemoryPool<char>.Shared.Rent(128);
+// in this example 128 chars will be sufficient, use the smallest size that fits your needs
+ReadOnlySpan<char> key = ArrowDb.GenerateTypedKey<Person>("john", buffer.Memory.Span);
+// key is now ReadOnlySpan<char> that contains "Person:john"
+// we can use it for Upsert, ContainsKey, TryGetValue, Remove, etc...
+_ = db.ContainsKey(key);
+_ = db.TryGetValue(key, MyJsonContext.Default.Person, out var person);
+// etc...
+```
+
+This can also be used to filter out keys for mass lookups:
+
+```csharp
+// get all keys
+var keys = db.Keys;
+// get the type name
+var prefix = typeof(Person).Name;
+// get all keys where the value type is Person
+var people = keys.Where(k => k.StartsWith(prefix));
+```
 
 ## Use `ArrowDb` for Runtime Caching
 

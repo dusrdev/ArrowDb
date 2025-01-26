@@ -40,7 +40,7 @@ public class FileSerializer : IDbSerializer {
 
     /// <inheritdoc />
     public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
-        using var file = File.OpenWrite(_path);
+        using var file = File.Create(_path);
         JsonSerializer.Serialize(file, data, _jsonTypeInfo);
         return ValueTask.CompletedTask;
     }
