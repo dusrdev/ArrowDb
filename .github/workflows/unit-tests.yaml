@@ -1,4 +1,4 @@
-name: Run Durability Tests
+name: Unit Tests
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ jobs:
     env:
       # Define the path to project and test project
       PROJECT: src/ArrowDbCore/ArrowDbCore.csproj
-      TEST_PROJECT: tests/ArrowDbCore.Tests.Durability/ArrowDbCore.Tests.Durability.csproj
+      TEST_PROJECT: tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj
 
     steps:
       # 1. Checkout the repository code
@@ -44,6 +44,10 @@ jobs:
           dotnet clean ${{ env.PROJECT }} -c ${{ matrix.configuration }}
           dotnet clean ${{ env.TEST_PROJECT }} -c ${{ matrix.configuration }}
 
-      # 5. Run Durability Tests
-      - name: Run Durability Tests
-        run: dotnet test ${{ env.TEST_PROJECT }} -c ${{ matrix.configuration }}
+      # 5. Run Isolated Unit Tests
+      - name: Run Isolated Unit Tests
+        run: dotnet test ${{ env.TEST_PROJECT }} -c ${{ matrix.configuration }} --filter "Category=Isolated"
+
+      # 6. Run Unit Tests
+      - name: Run Non-Isolated Unit Tests
+        run: dotnet test ${{ env.TEST_PROJECT }} -c ${{ matrix.configuration }} --filter "Category!=Isolated"

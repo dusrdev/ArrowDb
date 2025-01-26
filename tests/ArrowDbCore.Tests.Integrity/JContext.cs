@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace ArrowDbCore.Tests.Durability;
+namespace ArrowDbCore.Tests.Integrity;
 
 [JsonSourceGenerationOptions(WriteIndented = false, NumberHandling = JsonNumberHandling.AllowReadingFromString, UseStringEnumConverter = true)]
 [JsonSerializable(typeof(Person))]

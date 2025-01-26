@@ -40,7 +40,7 @@
       <_Parameter1>ArrowDbCore.Tests.Unit</_Parameter1>
     </AssemblyAttribute>
     <AssemblyAttribute Include="System.Runtime.CompilerServices.InternalsVisibleToAttribute">
-      <_Parameter1>ArrowDbCore.Tests.Durability</_Parameter1>
+      <_Parameter1>ArrowDbCore.Tests.Integrity</_Parameter1>
     </AssemblyAttribute>
   </ItemGroup>
 

@@ -1,6 +1,6 @@
 ﻿using Bogus;
 
-namespace ArrowDbCore.Tests.Durability;
+namespace ArrowDbCore.Tests.Integrity;
 
 public class ReadWriteCycles
 {
