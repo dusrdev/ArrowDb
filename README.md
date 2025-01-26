@@ -5,7 +5,9 @@
 </div>
 <div align="center">
 
-  [![NuGet](https://img.shields.io/nuget/v/ArrowDb.svg)](https://www.nuget.org/packages/ArrowDb)
+  [![NuGet Downloads](https://img.shields.io/nuget/dt/ArrowDb?style=flat&label=Nuget%20-%20ArrowDb)](https://www.nuget.org/packages/ArrowDb)
+  [![Unit Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml)
+  [![Integrity Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml)
   
 </div>
 
