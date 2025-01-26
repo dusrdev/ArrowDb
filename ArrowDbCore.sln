@@ -15,6 +15,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "benchmarks", "benchmarks", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArrowDbCore.Benchmarks", "benchmarks\ArrowDbCore.Benchmarks\ArrowDbCore.Benchmarks.csproj", "{419CA340-26F0-4FC1-83AC-D06A93AAB190}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ArrowDbCore.Tests.Durability", "tests\ArrowDbCore.Tests.Durability\ArrowDbCore.Tests.Durability.csproj", "{BD64C8CB-1B06-4F78-890A-F830ED2EF982}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -36,10 +38,15 @@ Global
 		{419CA340-26F0-4FC1-83AC-D06A93AAB190}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{419CA340-26F0-4FC1-83AC-D06A93AAB190}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{419CA340-26F0-4FC1-83AC-D06A93AAB190}.Release|Any CPU.Build.0 = Release|Any CPU
+		{BD64C8CB-1B06-4F78-890A-F830ED2EF982}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{BD64C8CB-1B06-4F78-890A-F830ED2EF982}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{BD64C8CB-1B06-4F78-890A-F830ED2EF982}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{BD64C8CB-1B06-4F78-890A-F830ED2EF982}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(NestedProjects) = preSolution
 		{23F42F88-1579-4087-ABF2-814EDBD53F59} = {822210FC-B851-4C2C-AEAE-250F17687CC3}
 		{CDBBF9DF-5F8B-41C0-AAE7-2EC157C3BA1D} = {4ED1B77D-F425-487C-B32C-53F92A8E5A2E}
 		{419CA340-26F0-4FC1-83AC-D06A93AAB190} = {9844EA79-5000-4276-A2C4-D7BA430F18B4}
+		{BD64C8CB-1B06-4F78-890A-F830ED2EF982} = {4ED1B77D-F425-487C-B32C-53F92A8E5A2E}
 	EndGlobalSection
 EndGlobal
