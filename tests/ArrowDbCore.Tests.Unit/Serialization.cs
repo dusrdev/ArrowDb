@@ -1,4 +1,6 @@
-﻿namespace ArrowDbCore.Tests.Unit;
+﻿using System.Security.Cryptography;
+
+namespace ArrowDbCore.Tests.Unit;
 
 public class Serialization {
     [Fact]
@@ -56,31 +58,42 @@ public class Serialization {
         Assert.Equal(0, db.PendingChanges);
     }
 
-    [Fact]
-    public async Task SerializedToFile_Serializes_And_Deserializes_As_Expected() {
-        var file = Path.GetTempFileName();
+    private static async Task File_Serializes_And_Deserializes_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
         try {
-            var db = await ArrowDb.CreateFromFile(file);
+            var db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
             Assert.Equal(1, db.PendingChanges);
             await db.SerializeAsync();
-            var db2 = await ArrowDb.CreateFromFile(file);
+            var db2 = await factory();
             Assert.Equal(db2.Source, db.Source);
         } finally {
             // cleanup
-            if (File.Exists(file)) {
-                File.Delete(file);
+            if (File.Exists(path)) {
+                File.Delete(path);
             }
         }
     }
 
     [Fact]
-    public async Task SerializedToFile_Serializes_And_Rollback_As_Expected() {
-        var file = Path.GetTempFileName();
+    public async Task FileSerializer_Serializes_And_Deserializes_As_Expected() {
+        var path = Path.GetTempFileName();
+        await File_Serializes_And_Deserializes_As_Expected(path, () => ArrowDb.CreateFromFile(path));
+    }
+
+    [Fact]
+    public async Task AesFileSerializer_Serializes_And_Deserializes_As_Expected() {
+        var path = Path.GetTempFileName();
+        using var aes = Aes.Create();
+        aes.GenerateKey();
+        aes.GenerateIV();
+        await File_Serializes_And_Deserializes_As_Expected(path, () => ArrowDb.CreateFromFileWithAes(path, aes));
+    }
+
+    private static async Task File_Serializes_And_Rollback_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
         try {
-            var db = await ArrowDb.CreateFromFile(file);
+            var db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
@@ -101,9 +114,24 @@ public class Serialization {
             Assert.Equal(1, value);
         } finally {
             // cleanup
-            if (File.Exists(file)) {
-                File.Delete(file);
+            if (File.Exists(path)) {
+                File.Delete(path);
             }
         }
+    }
+
+    [Fact]
+    public async Task FileSerializer_Serializes_And_Rollback_As_Expected() {
+        var path = Path.GetTempFileName();
+        await File_Serializes_And_Rollback_As_Expected(path, () => ArrowDb.CreateFromFile(path));
+    }
+
+    [Fact]
+    public async Task AesFileSerializer_Serializes_And_Rollback_As_Expected() {
+        var path = Path.GetTempFileName();
+        using var aes = Aes.Create();
+        aes.GenerateKey();
+        aes.GenerateIV();
+        await File_Serializes_And_Rollback_As_Expected(path, () => ArrowDb.CreateFromFileWithAes(path, aes));
     }
 }
