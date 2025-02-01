@@ -1,10 +1,11 @@
-﻿using Bogus;
+﻿using System.Security.Cryptography;
+
+using Bogus;
 
 namespace ArrowDbCore.Tests.Integrity;
 
 public class LargeFile {
-    [Fact]
-    public async Task LargeFile_Passes_OneReadWriteCycle() {
+    private static async Task LargeFile_Passes_OneReadWriteCycle(string path, Func<ValueTask<ArrowDb>> factory) {
         const int itemCount = 500_000;
 
         var faker = new Faker<Person>();
@@ -15,11 +16,9 @@ public class LargeFile {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test.db");
         try {
             // load the db
-            var db = await ArrowDb.CreateFromFile(path);
+            var db = await factory();
             // clear
             db.Clear();
             // add items
@@ -32,7 +31,7 @@ public class LargeFile {
             await db.SerializeAsync();
             var actualCount = db.Count;
             // try to load again
-            var db2 = await ArrowDb.CreateFromFile(path);
+            var db2 = await factory();
             Assert.Equal(actualCount, db2.Count);
         } finally {
             if (File.Exists(path)) {
@@ -41,5 +40,20 @@ public class LargeFile {
         }
 
         // this test fails if an exception is thrown
+    }
+
+    [Fact]
+    public async Task LargeFile_Passes_OneReadWriteCycle_FileSerializer() {
+        var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-file-serializer.db");
+        await LargeFile_Passes_OneReadWriteCycle(path, () => ArrowDb.CreateFromFile(path));
+    }
+
+    [Fact]
+    public async Task LargeFile_Passes_OneReadWriteCycle_AesFileSerializer() {
+        var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-aes-file-serializer.db");
+        using var aes = Aes.Create();
+        aes.GenerateKey();
+        aes.GenerateIV();
+        await LargeFile_Passes_OneReadWriteCycle(path, () => ArrowDb.CreateFromFileWithAes(path, aes));
     }
 }
