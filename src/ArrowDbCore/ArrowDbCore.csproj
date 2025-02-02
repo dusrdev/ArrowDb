@@ -11,7 +11,7 @@
   <PropertyGroup>
     <Authors>David Shnayder</Authors>
     <Copyright>David Shnayder</Copyright>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>Readme.Nuget.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageId>ArrowDb</PackageId>
@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
-    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="Readme.Nuget.md" Pack="true" PackagePath="Readme.Nuget.md" />
   </ItemGroup>
 
   <ItemGroup>
