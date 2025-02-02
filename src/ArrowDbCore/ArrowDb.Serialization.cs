@@ -1,4 +1,6 @@
-﻿namespace ArrowDbCore;
+﻿using System.Runtime.CompilerServices;
+
+namespace ArrowDbCore;
 
 public partial class ArrowDb {
 	/// <summary>
@@ -23,6 +25,7 @@ public partial class ArrowDb {
 	/// <summary>
 	/// Waits for the semaphore if the database is currently serializing
 	/// </summary>
+	[MethodImpl(MethodImplOptions.AggressiveInlining)]
 	private void WaitIfSerializing() {
 		if (Semaphore.CurrentCount == 0) {
 			Semaphore.Wait();

@@ -1,10 +1,11 @@
-﻿using Bogus;
+﻿using System.Security.Cryptography;
+
+using Bogus;
 
 namespace ArrowDbCore.Tests.Integrity;
 
 public class OverwriteForceClear {
-    [Fact]
-    public async Task SerializeOverwritesExistingFile() {
+    private static async Task SerializeOverwritesExistingFile(string path, Func<ValueTask<ArrowDb>> factory) {
         const int itemCount = 1_000;
 
         var faker = new Faker<Person>();
@@ -15,11 +16,9 @@ public class OverwriteForceClear {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("overwrite-test.db");
         try {
             // load the db
-            var db = await ArrowDb.CreateFromFile(path);
+            var db = await factory();
             // clear
             db.Clear();
             // add items
@@ -46,5 +45,20 @@ public class OverwriteForceClear {
         }
 
         // this test fails if an exception is thrown or the file is not overwritten
+    }
+
+    [Fact]
+    public async Task SerializeOverwritesExistingFile_FileSerializer() {
+        var path = Sharpify.Utils.Env.PathInBaseDirectory("overwrite-test-file-serializer.db");
+        await SerializeOverwritesExistingFile(path, () => ArrowDb.CreateFromFile(path));
+    }
+
+    [Fact]
+    public async Task SerializeOverwritesExistingFile_AesFileSerializer() {
+        var path = Sharpify.Utils.Env.PathInBaseDirectory("overwrite-test-aes-file-serializer.db");
+        using var aes = Aes.Create();
+        aes.GenerateKey();
+        aes.GenerateIV();
+        await SerializeOverwritesExistingFile(path, () => ArrowDb.CreateFromFileWithAes(path, aes));
     }
 }

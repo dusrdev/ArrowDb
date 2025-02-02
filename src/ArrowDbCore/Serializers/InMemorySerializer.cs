@@ -1,6 +1,7 @@
 ﻿using System.Collections.Concurrent;
 
-namespace ArrowDbCore;
+
+namespace ArrowDbCore.Serializers;
 
 /// <summary>
 /// An in-memory serializer (does nothing)

@@ -4,14 +4,14 @@
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.1.0.0</Version>
+    <Version>1.2.0.0</Version>
     <IsAotCompatible>true</IsAotCompatible>
   </PropertyGroup>
 
   <PropertyGroup>
     <Authors>David Shnayder</Authors>
     <Copyright>David Shnayder</Copyright>
-    <PackageReadmeFile>README.md</PackageReadmeFile>
+    <PackageReadmeFile>Readme.Nuget.md</PackageReadmeFile>
     <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageId>ArrowDb</PackageId>
@@ -28,7 +28,7 @@
 
   <ItemGroup>
     <None Include="LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" />
-    <None Include="README.md" Pack="true" PackagePath="README.md" />
+    <None Include="Readme.Nuget.md" Pack="true" PackagePath="Readme.Nuget.md" />
   </ItemGroup>
 
   <ItemGroup>

@@ -1,4 +1,8 @@
-﻿namespace ArrowDbCore;
+﻿using System.Security.Cryptography;
+
+using ArrowDbCore.Serializers;
+
+namespace ArrowDbCore;
 
 public partial class ArrowDb {
 	/// <summary>
@@ -8,6 +12,18 @@ public partial class ArrowDb {
 	/// <returns>A database instance</returns>
 	public static async ValueTask<ArrowDb> CreateFromFile(string path) {
 		var serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
+		var data = await serializer.DeserializeAsync();
+		return new ArrowDb(data, serializer);
+	}
+
+    /// <summary>
+    /// Initializes an <see cref="Aes"/> managed file/disk backed database at the specified path
+    /// </summary>
+    /// <param name="path">The path that the file that backs the database</param>
+    /// <param name="aes">The <see cref="Aes"/> instance to use</param>
+    /// <returns>A database instance</returns>
+    public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes) {
+		var serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
 		var data = await serializer.DeserializeAsync();
 		return new ArrowDb(data, serializer);
 	}

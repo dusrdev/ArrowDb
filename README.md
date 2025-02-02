@@ -8,7 +8,7 @@
   [![NuGet Downloads](https://img.shields.io/nuget/dt/ArrowDb?style=flat&label=Nuget%20-%20ArrowDb)](https://www.nuget.org/packages/ArrowDb)
   [![Unit Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml)
   [![Integrity Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml)
-  
+
 </div>
 
 ArrowDb is a fast, lightweight, and type-safe key-value database designed for .NET.
@@ -97,10 +97,11 @@ bool db.TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTyp
 
 Notice that all APIs accept keys as `ReadOnlySpan<char>` to avoid unnecessary allocations. This means that if you check for a key by some slice of a string, there is no need to allocate a string just for the lookup.
 
-Upserting (adding or updating) is done via a single method:
+Upserting (adding or updating) is done via a 2 overloads:
 
 ```csharp
-bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool>? updateCondition = null);  // upserts a value into the ArrowDb instance
+bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
+bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);  // upserts a value into the ArrowDb instance
 ```
 
 And removal:
@@ -112,21 +113,18 @@ void Clear();                              // removes all entries from the Arrow
 
 ## Optimistic Concurrency Control
 
-`ArrowDb` uses optimistic concurrency control as a way to resolve write conflicts, similar to MongoDb. This is done via the optional `updateCondition` parameter of the `Upsert` method.
+`ArrowDb` uses optimistic concurrency control as a way to resolve write conflicts, similar to MongoDb. This is done via the overload of `Upsert` with the `updateCondition` parameter.
 
-The updateCondition is a predicate that is invoked on the reference value that is currently stored in the db under the same key.
+The `updateCondition` is a predicate that is invoked on the reference value that is currently stored in the db under the same key.
 
-For ArrowDb to reject the update (and return `false`), ALL of the following 3 conditions must be met:
+For ArrowDb to reject the update (and return `false`), ALL of the following 2 conditions must be met:
 
-1. The `updateCondition` predicate must not be null.
-2. An entry with the same key must exist in the db and be successfully parsed into the specified type.
-3. The `updateCondition` predicate returns `false` when invoked on the reference value.
+1. An entry with the same key must exist in the db and be successfully parsed into the specified type.
+2. The `updateCondition` predicate returns `false` when invoked on the reference value.
 
 This means that all other cases would allow addition/update:
 
-* If `updateCondition` is null, no check is performed on the same key before adding/updating.
-  * This also means that the type will not be validated to be the same as the existing value, and will just overwrite it.
-* If `updateCondition` is not null, but the key does not exist, the update is allowed - and regarded as an addition. If a strict "update or nothing" behavior is desired, combine `ContainsKey` into the workflow before calling `Upsert`.
+* If `updateCondition` is used and the key does not exist, the update is allowed - and regarded as an addition. If a strict "update or nothing" behavior is desired, combine `ContainsKey` into the workflow before calling `Upsert`.
 
 To illustrate this, Let’s look at an example of a timestamped `Note` entity:
 
@@ -194,6 +192,19 @@ var db = await ArrowDb.CreateInMemory();
 // or with dependency injection
 builder.Services.AddSingleton(() => ArrowDb.CreateInMemory().GetAwaiter().GetResult());
 // Since this isn’t persisted, you may also use it as a Transient or Scoped service (whatever fits your needs).
+```
+
+## Encryption
+
+As seen earlier, the default recommended serializer is `FileSerializer`, which serializes the db to a file on disk. In addition to it, `ArrowDb` also features a similar serializer that encrypts the db to a file on disk (the `AesFileSerializer`), for that the serializer requires an `Aes` instance to be passed along with the path to the file.
+
+```csharp
+string path = "store.db";
+using var aes = Aes.Create();
+var db = await ArrowDb.CreateFromFileWithAes(path, aes);
+// or with dependency injection
+builder.Services.AddSingleton(_ => Aes.Create());
+builder.Services.AddSingleton(services => ArrowDb.CreateFromFileWithAes(path, services.GetRequiredService<Aes>()).GetAwaiter().GetResult());
 ```
 
 ## Serialization

@@ -2,7 +2,8 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-namespace ArrowDbCore;
+
+namespace ArrowDbCore.Serializers;
 
 /// <summary>
 /// A file/disk backed serializer
