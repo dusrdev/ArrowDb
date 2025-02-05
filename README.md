@@ -316,8 +316,8 @@ db.Upsert(path, video, MyJsonContext.Default.ByteArray); // upsert the bytes und
 
 The performance characteristics of ArrowDb, listed above, are based on benchmarks conducted on an M2 MacBook Pro using [BenchmarkDotNet](https://github.com/dotnet/BenchmarkDotNet):
 
-* [Random Operations, Upserts/Removals of `Person` [Count = 100, 10,000, 1,000,000]](benchmarks/ArrowDb.Benchmarks/BenchmarkDotNet.Artifacts/ArrowDb.Benchmarks.RandomOperationsBenchmarks-report-github.md)
-* [SerializeAsync, Containing `Person` entries [Size = 100, 10,000, 1,000,000]](benchmarks/ArrowDb.Benchmarks/BenchmarkDotNet.Artifacts/ArrowDb.Benchmarks.SerializationToFileBenchmarks.md)
+* [Random Operations, Upserts/Removals of `Person` [Count = 100, 10,000, 1,000,000]](benchmarks/ArrowDbCore.Benchmarks/BenchmarkDotNet.Artifacts/ArrowDbCore.Benchmarks.RandomOperationsBenchmarks-report-github.md)
+* [SerializeAsync, Containing `Person` entries [Size = 100, 10,000, 1,000,000]](benchmarks/ArrowDbCore.Benchmarks/BenchmarkDotNet.Artifacts/ArrowDbCore.Benchmarks.SerializationToFileBenchmarks.md)
 
 ## Contributing
 
