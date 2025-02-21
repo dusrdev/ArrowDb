@@ -97,12 +97,22 @@ bool db.TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTyp
 
 Notice that all APIs accept keys as `ReadOnlySpan<char>` to avoid unnecessary allocations. This means that if you check for a key by some slice of a string, there is no need to allocate a string just for the lookup.
 
-Upserting (adding or updating) is done via a 2 overloads:
+Upserting (adding or updating) is done via 4 overloads:
 
 ```csharp
+bool db.Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
 bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
-bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);  // upserts a value into the ArrowDb instance
+bool db.Upsert<TValue>(string, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);
+bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);
 ```
+
+### Upsert Overloads Best Practices
+
+As noted above, There are 2 main upsert methods, but each has 2 options, a `ReadOnlySpan<char>` key, or a `string` key.
+
+The `ReadOnlySpan<char>` methods are best used for scenarios where the key is generated using a slice of a string (whether from regular string, stackallocated buffers, interop and so and forth), and cases where the value for the same key is being frequently updated, in which case this method will replace the value without allocating the key.
+
+The `string` methods are best for addition and cases where the parameter in the caller method is already of type `string`, in these case the direct use of `string` will prevent a `string` allocation by the lookup.
 
 And removal:
 
@@ -193,6 +203,18 @@ var db = await ArrowDb.CreateInMemory();
 builder.Services.AddSingleton(() => ArrowDb.CreateInMemory().GetAwaiter().GetResult());
 // Since this isn’t persisted, you may also use it as a Transient or Scoped service (whatever fits your needs).
 ```
+
+A common code pattern for caching usually consists of some `GetOrAdd` method, that will check if a value exists by the key, and return it, otherwise it will accept a method used to generate the value, which will be used to add the value to the cache, then return it.
+
+`ArrowDb` supports this via the `async ValueTask` method:
+
+```csharp
+async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory);
+```
+
+If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
+
+Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
 
 ## Encryption
 
