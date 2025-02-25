@@ -1,0 +1,12 @@
+<Solution>
+  <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/ArrowDbCore.Benchmarks/ArrowDbCore.Benchmarks.csproj" />
+  </Folder>
+  <Folder Name="/src/">
+    <Project Path="src/ArrowDbCore/ArrowDbCore.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ArrowDbCore.Tests.Integrity/ArrowDbCore.Tests.Integrity.csproj" />
+    <Project Path="tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj" />
+  </Folder>
+</Solution>
