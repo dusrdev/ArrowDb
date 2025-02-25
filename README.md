@@ -97,13 +97,15 @@ bool db.TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTyp
 
 Notice that all APIs accept keys as `ReadOnlySpan<char>` to avoid unnecessary allocations. This means that if you check for a key by some slice of a string, there is no need to allocate a string just for the lookup.
 
-Upserting (adding or updating) is done via 4 overloads:
+Upserting (adding or updating) is done via 6 overloads:
 
 ```csharp
 bool db.Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
+bool db.Upsert<TValue>(string, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition);
+bool Upsert<TValue, TArg>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument);
 bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
-bool db.Upsert<TValue>(string, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);
-bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition = null);
+bool db.Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition);
+bool Upsert<TValue, TArg>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument);
 ```
 
 ### Upsert Overloads Best Practices
@@ -161,6 +163,30 @@ do {
 
 As the example shows retries is the usual way to resolve these conflicts, but custom logic can also be used, you can simply reject the operation, and also use other loops or even `goto` statements if you are brave enough.
 
+In this example, `referenceDate` is a local value, and when used inside the lambda of the `updateCondition` it allocates a [Closure](https://www.youtube.com/watch?v=h3MsnBRqzcY), which depending on whether is a performance critical code section, could be sub-optimal. To address this, a secondary overload is available:
+
+```csharp
+bool Upsert<TValue, TArg>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument)
+
+// adapt example to use this
+bool noteUpdated = false; // track if conflict was resolved
+do {
+    if (!db.TryGetValue("shopping list", MyJsonContext.Default.Note, out Note? note)) {
+        // note does not exist, I am skipping this condition as it is not part of the example
+    }
+    // we are here, so previous note was found
+    var referenceDate = note.LastUpdatedUTC; // locally store the reference
+    note!.Content += "Pizza"; // modify the note
+    note.LastUpdatedUTC = TimeProvider.System.UtcNow; // update note timestamp
+    // update on condition that the stored reference is still the same, by checking the timestamp
+    if (db.Upsert("shopping list", note, MyJsonContext.Default.Note, (reference, date) => reference.LastUpdatedUTC == date), referenceDate) {
+        noteUpdated = true; // note was updated - this will break out of the loop
+    }
+} while (!noteUpdated);
+```
+
+Using the overload we created a different lambda, in which there are no 2 input arguments, one of which is the date to check against, and the scope of the lambda only uses its parameters, which in turn means that no class has to be allocated for the closure, and instead the compiler will generate the lambda as a static method, the argument would then be forwarded from `Upsert` into the lambda during runtime. Avoiding the performance penalty of allocating a closure class for each call.
+
 ## `ReadOnlySpan<char>` Key Generation
 
 `ArrowDb` APIs use `ReadOnlySpan<char>` for keys to minimize unnecessary string allocations. Usually using the API with `Upsert` doesn't require specific logic as string can also be interpreted as `ReadOnlySpan<char>`, however when checking if a key exists or removing keys, usually you don't have pre-existing reference to the key, which means you have to use rather low level APIs to efficiently generate a `ReadOnlySpan<char>` key.
@@ -210,11 +236,14 @@ A common code pattern for caching usually consists of some `GetOrAdd` method, th
 
 ```csharp
 async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory);
+async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, ValueTask<TValue>> valueFactory, TArg factoryArgument);
 ```
 
 If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
 
 Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
+
+Similarly to `Upsert` - `GetOrAddAsync` also has an overload that accepts `TArg` and and enables closure free execution for optimal performance.
 
 ## Encryption
 
