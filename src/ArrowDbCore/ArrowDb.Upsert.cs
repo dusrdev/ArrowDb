@@ -67,6 +67,32 @@ public partial class ArrowDb {
 		return Upsert(key, value, jsonTypeInfo);
 	}
 
+    /// <summary>
+    /// Tries to upsert the specified key with the specified value into the database
+    /// </summary>
+    /// <typeparam name="TValue">The type of the value to upsert</typeparam>
+    /// <typeparam name="TArg">The type of the argument for the updateCondition function</typeparam>
+    /// <param name="key">The key at which to upsert the value</param>
+    /// <param name="value">The value to upsert</param>
+    /// <param name="jsonTypeInfo">The json type info for the value type</param>
+    /// <param name="updateCondition">A conditional check that determines whether this update should be performed</param>
+    /// <param name="updateConditionArgument">An argument that could be provided to the updateCondition function to avoid a closure</param>
+    /// <returns>True if the value was upserted, false otherwise</returns>
+    /// <remarks>
+    /// <para>
+    /// <paramref name="updateCondition"/> can be used to resolve write conflicts, the update will be rejected only if both conditions are met:
+    /// </para>
+    /// <para>1. A value for the specified key exists and successfully deserialized to <typeparamref name="TValue"/></para>
+    /// <para>2. <paramref name="updateCondition"/> on the reference value returns false</para>
+    /// </remarks>
+    public bool Upsert<TValue, TArg>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument) {
+		if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
+			 !updateCondition(existingReference, updateConditionArgument)) {
+			return false;
+		}
+		return Upsert(key, value, jsonTypeInfo);
+	}
+
 	/// <summary>
 	/// Tries to upsert the specified key with the specified value into the database
 	/// </summary>
@@ -89,6 +115,35 @@ public partial class ArrowDb {
 	public bool Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition) {
 		if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
 			 !updateCondition(existingReference)) {
+			return false;
+		}
+		return Upsert(key, value, jsonTypeInfo);
+	}
+
+	/// <summary>
+	/// Tries to upsert the specified key with the specified value into the database
+	/// </summary>
+	/// <typeparam name="TValue">The type of the value to upsert</typeparam>
+	/// <typeparam name="TArg">The type of the argument for the updateCondition function</typeparam>
+	/// <param name="key">The key at which to upsert the value</param>
+	/// <param name="value">The value to upsert</param>
+	/// <param name="jsonTypeInfo">The json type info for the value type</param>
+	/// <param name="updateCondition">A conditional check that determines whether this update should be performed</param>
+	/// <param name="updateConditionArgument">An argument that could be provided to the updateCondition function to avoid a closure</param>
+	/// <returns>True if the value was upserted, false otherwise</returns>
+	/// <remarks>
+	/// <para>
+	/// <paramref name="updateCondition"/> can be used to resolve write conflicts, the update will be rejected only if both conditions are met:
+	/// </para>
+	/// <para>1. A value for the specified key exists and successfully deserialized to <typeparamref name="TValue"/></para>
+	/// <para>2. <paramref name="updateCondition"/> on the reference value returns false</para>
+	/// <para>
+	/// This method overload which uses ReadOnlySpan{char} will not allocate a new string for the key if it already exists, instead it will directly replace the value
+	/// </para>
+	/// </remarks>
+	public bool Upsert<TValue, TArg>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument) {
+		if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
+			 !updateCondition(existingReference, updateConditionArgument)) {
 			return false;
 		}
 		return Upsert(key, value, jsonTypeInfo);
