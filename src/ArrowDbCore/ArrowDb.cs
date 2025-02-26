@@ -78,7 +78,7 @@ public sealed partial class ArrowDb {
 	/// </summary>
 	~ArrowDb() {
 		Interlocked.Decrement(ref s_runningInstances);
-		Semaphore?.Dispose();
+		Semaphore.Dispose();
 	}
 
 	/// <summary>

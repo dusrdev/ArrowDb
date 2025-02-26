@@ -5,7 +5,7 @@ namespace ArrowDbCore;
 
 public partial class ArrowDb {
 	/// <summary>
-	/// Tries to retrieve a value stored in the database under <paramref name="key"/>, if doesn't exist, it uses the factory to create and add it, then returns it.
+	/// Tries to retrieve a value stored in the database under <paramref name="key"/>, if it doesn't exist, it uses the factory to create and add it, then returns it.
 	/// </summary>
 	/// <typeparam name="TValue">The type of the value to get or add</typeparam>
 	/// <param name="key">The key at which to find or add the value</param>
@@ -24,7 +24,7 @@ public partial class ArrowDb {
 	}
 
 	/// <summary>
-	/// Tries to retrieve a value stored in the database under <paramref name="key"/>, if doesn't exist, it uses the factory to create and add it, then returns it.
+	/// Tries to retrieve a value stored in the database under <paramref name="key"/>, if it doesn't exist, it uses the factory to create and add it, then returns it.
 	/// </summary>
 	/// <typeparam name="TValue">The type of the value to get or add</typeparam>
 	/// <typeparam name="TArg">The type of the argument for the updateCondition function</typeparam>
