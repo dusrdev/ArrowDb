@@ -51,9 +51,9 @@ public sealed class AesFileSerializer : IDbSerializer {
 	/// <inheritdoc />
     public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
         using var fileStream = File.Create(_path);
-		using var encryptor = _aes.CreateEncryptor();
-		using var cryptoStream = new CryptoStream(fileStream, encryptor, CryptoStreamMode.Write);
-		JsonSerializer.Serialize(cryptoStream, data, _jsonTypeInfo);
-		return ValueTask.CompletedTask;
+        using var encryptor = _aes.CreateEncryptor();
+        using var cryptoStream = new CryptoStream(fileStream, encryptor, CryptoStreamMode.Write);
+        JsonSerializer.Serialize(cryptoStream, data, _jsonTypeInfo);
+        return ValueTask.CompletedTask;
     }
 }

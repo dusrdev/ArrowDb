@@ -8,4 +8,4 @@ namespace ArrowDbCore;
 /// </summary>
 [JsonSourceGenerationOptions(WriteIndented = false, AllowTrailingCommas = true, NumberHandling = JsonNumberHandling.AllowReadingFromString, UseStringEnumConverter = true)]
 [JsonSerializable(typeof(ConcurrentDictionary<string, byte[]>))]
-public partial class ArrowDbJsonContext : JsonSerializerContext {}
+public partial class ArrowDbJsonContext : JsonSerializerContext;
