@@ -1,0 +1,12 @@
+name: Unit Tests On Ubuntu
+
+on:
+  workflow_dispatch:
+
+jobs:
+  test:
+    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test.yaml@main
+    with:
+      platform: ubuntu-latest
+      configuration: release
+      test-project-path: tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj
