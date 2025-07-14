@@ -1,4 +1,6 @@
-﻿namespace ArrowDbCore.Tests.Unit;
+﻿using ArrowDbCore.Tests.Common;
+
+namespace ArrowDbCore.Tests.Unit;
 
 public class OnChange {
     [Fact]

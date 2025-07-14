@@ -1,5 +1,7 @@
 ﻿using System.Security.Cryptography;
 
+using ArrowDbCore.Tests.Common;
+
 namespace ArrowDbCore.Tests.Unit;
 
 public class Serialization {

@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/ArrowDbCore/ArrowDbCore.csproj" />
+    <ProjectReference Include="../ArrowDbCore.Tests.Common/ArrowDbCore.Tests.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>

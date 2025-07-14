@@ -1,4 +1,4 @@
-﻿namespace ArrowDbCore.Tests.Integrity;
+﻿namespace ArrowDbCore.Tests.Common;
 
 public class Person {
     public string Name { get; set; } = string.Empty;

@@ -1,6 +1,10 @@
 ﻿using System.Security.Cryptography;
 
+using ArrowDbCore.Tests.Common;
+
 using Bogus;
+
+using Person = ArrowDbCore.Tests.Common.Person;
 
 namespace ArrowDbCore.Tests.Integrity;
 

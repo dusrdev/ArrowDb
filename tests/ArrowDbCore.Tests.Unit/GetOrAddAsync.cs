@@ -1,4 +1,6 @@
-﻿namespace ArrowDbCore.Tests.Unit;
+﻿using ArrowDbCore.Tests.Common;
+
+namespace ArrowDbCore.Tests.Unit;
 
 public class GetOrAddAsync {
 #pragma warning disable xUnit1031 // Do not use blocking task operations in test method
