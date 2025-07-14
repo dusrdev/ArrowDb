@@ -1,17 +1,11 @@
 namespace ArrowDbCore.Tests.Unit.Isolated;
 
-// These tests need to be separated into different class to ensure they run on different processes
-
-public class StaticVariables1 {
-    [Fact]
-    public void Instance_Counter_Is_Zero_At_Startup() {
-        Assert.Equal(0, ArrowDb.RunningInstances);
-    }
-}
-
-public class StaticVariables2 {
+public class StaticVariables {
     [Fact]
     public async Task Instance_Ids_Match_Running() {
+        // At startup of process instances should be 0
+        Assert.Equal(0, ArrowDb.RunningInstances);
+        // Create 10 instances and check counter
         const int count = 10;
         var dbs = new ArrowDb[count];
         for (var i = 0; i < count; i++) {
