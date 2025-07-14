@@ -6,8 +6,7 @@
 <div align="center">
 
   [![NuGet Downloads](https://img.shields.io/nuget/dt/ArrowDb?style=flat&label=Nuget%20-%20ArrowDb)](https://www.nuget.org/packages/ArrowDb)
-  [![Unit Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests.yaml)
-  [![Integrity Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/integrity-tests.yaml)
+  [![Tests](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests-matrix.yaml/badge.svg)](https://github.com/dusrdev/ArrowDb/actions/workflows/unit-tests-matrix.yaml)
 
 </div>
 
@@ -70,6 +69,8 @@ if (db.TryGetValue(john.Name, MyJsonContext.Default.Person, out var johnFromDb))
     Console.WriteLine($"Found {johnFromDb.Name} {johnFromDb.Surname}");
 }
 ```
+
+* Using `TryGetValue` with an incorrect `JsonTypeInfo<T>` (wrong type) will cause a `JsonException` to be thrown. If your call site cannot guarantee a type, be sure to handle the possibility of an exception.
 
 Up until now, the data was stored in-memory, to finalize and persist the changes, we need to call:
 
