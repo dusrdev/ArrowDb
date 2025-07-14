@@ -8,5 +8,6 @@ jobs:
     uses: dusrdev/actions/.github/workflows/reusable-dotnet-test.yaml@main
     with:
       platform: ubuntu-latest
+      dotnet-version: 9.0.x
       configuration: release
       test-project-path: tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj
