@@ -70,6 +70,8 @@ if (db.TryGetValue(john.Name, MyJsonContext.Default.Person, out var johnFromDb))
 }
 ```
 
+* Using `TryGetValue` with an incorrect `JsonTypeInfo<T>` (wrong type) will cause a `JsonException` to be thrown. If your call site cannot guarantee a type, be sure to handle the possibility of an exception.
+
 Up until now, the data was stored in-memory, to finalize and persist the changes, we need to call:
 
 ```csharp
