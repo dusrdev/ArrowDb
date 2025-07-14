@@ -4,10 +4,18 @@ on:
   workflow_dispatch:
 
 jobs:
-  test:
-    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test.yaml@main
+  test-main:
+    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-mtp.yaml@main
     with:
       platform: ubuntu-latest
       dotnet-version: 9.0.x
-      configuration: release
+      configuration: Release
       test-project-path: tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj
+
+  test-isolated:
+    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-mtp.yaml@main
+    with:
+      platform: ubuntu-latest
+      dotnet-version: 9.0.x
+      configuration: Release
+      test-project-path: tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj
