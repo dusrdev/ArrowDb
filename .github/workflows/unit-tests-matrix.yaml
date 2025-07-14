@@ -5,14 +5,21 @@ on:
   workflow_dispatch:
 
 jobs:
-  test-main:
-    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-matrix-mtp.yaml@main
+  unit-tests:
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ubuntu-latest, windows-latest, macos-latest]
+        project: [tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj, tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj]
+    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-mtp.yaml@main
     with:
+      platform: ${{ matrix.platform }}
       dotnet-version: 9.0.x
-      test-project-path: tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj
+      test-project-path: ${{ matrix.project }}
 
-  test-isolated:
-    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-matrix-mtp.yaml@main
+  integrity-tests:
+    uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-mtp.yaml@main
     with:
+      platform: ubuntu-latest
       dotnet-version: 9.0.x
-      test-project-path: tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj
+      test-project-path: tests/ArrowDbCore.Tests.Integrity/ArrowDbCore.Tests.Integrity.csproj
