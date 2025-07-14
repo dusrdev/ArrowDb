@@ -8,6 +8,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/ArrowDbCore.Tests.Analyzers/ArrowDbCore.Tests.Analyzers.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Integrity/ArrowDbCore.Tests.Integrity.csproj" />
+    <Project Path="tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj" />
   </Folder>
 </Solution>
