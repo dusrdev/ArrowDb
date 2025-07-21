@@ -10,7 +10,7 @@ public partial class ArrowDb {
 	/// If there are no pending updates, this method does nothing, otherwise it serializes the database and resets the pending updates counter
 	/// </remarks>
 	public async Task SerializeAsync() {
-		if (_pendingChanges == 0) {
+		if (Interlocked.Read(ref _pendingChanges) == 0) {
 			return;
 		}
 		try {
