@@ -1,5 +1,9 @@
 # Changelog (Sorted by Date in Descending Order)
 
+## 1.4.0.1
+
+* Thread-safe counters types were changed from `int` to `long`, this includes `PendingChanges` and `RunningInstances`.
+
 ## 1.4.0.0
 
 * `GetOrAddAsync` and `Upsert` (which has the `updateCondition` argument) now both have overloads that accept a `TArg` parameter as well as a modified factory function that can use it, in order to avoid closures.
