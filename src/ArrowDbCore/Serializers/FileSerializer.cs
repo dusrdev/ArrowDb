@@ -2,47 +2,32 @@
 using System.Text.Json;
 using System.Text.Json.Serialization.Metadata;
 
-
 namespace ArrowDbCore.Serializers;
 
 /// <summary>
-/// A file/disk backed serializer
+/// A file/disk backed serializer using JSON.
 /// </summary>
-public class FileSerializer : IDbSerializer {
-    /// <summary>
-    /// The path to the file
-    /// </summary>
-    private readonly string _path;
-
-    /// <summary>
-    /// The json type info for the dictionary
-    /// </summary>
+public class FileSerializer : BaseFileSerializer {
     private readonly JsonTypeInfo<ConcurrentDictionary<string, byte[]>> _jsonTypeInfo;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="FileSerializer"/> class.
     /// </summary>
-    /// <param name="path">The path to the file</param>
-    /// <param name="jsonTypeInfo">The json type info for the dictionary</param>
-    public FileSerializer(string path, JsonTypeInfo<ConcurrentDictionary<string, byte[]>> jsonTypeInfo) {
-        _path = path;
+    /// <param name="path">The path to the file.</param>
+    /// <param name="jsonTypeInfo">The json type info for the dictionary.</param>
+    public FileSerializer(string path, JsonTypeInfo<ConcurrentDictionary<string, byte[]>> jsonTypeInfo)
+        : base(path) {
         _jsonTypeInfo = jsonTypeInfo;
     }
 
     /// <inheritdoc />
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync() {
-        if (!File.Exists(_path) || new FileInfo(_path).Length == 0) {
-            return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
-        }
-        using var file = File.OpenRead(_path);
-        var result = JsonSerializer.Deserialize(file, _jsonTypeInfo) ?? new();
-        return ValueTask.FromResult(result);
+    protected override void SerializeData(Stream stream, ConcurrentDictionary<string, byte[]> data) {
+        JsonSerializer.Serialize(stream, data, _jsonTypeInfo);
     }
 
     /// <inheritdoc />
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
-        using var file = File.Create(_path);
-        JsonSerializer.Serialize(file, data, _jsonTypeInfo);
-        return ValueTask.CompletedTask;
+    protected override ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream) {
+        var result = JsonSerializer.Deserialize(stream, _jsonTypeInfo) ?? new();
+        return ValueTask.FromResult(result);
     }
 }
