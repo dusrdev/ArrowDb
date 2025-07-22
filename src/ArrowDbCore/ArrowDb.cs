@@ -61,6 +61,11 @@ public sealed partial class ArrowDb {
 	private long _pendingChanges;
 
 	/// <summary>
+	/// Thread-safe transaction depth tracker
+	/// </summary>
+	internal long TransactionDepth = 0;
+
+	/// <summary>
 	/// Private Ctor
 	/// </summary>
 	/// <param name="source">A pre-existing or empty dictionary</param>

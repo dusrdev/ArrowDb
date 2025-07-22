@@ -3,6 +3,7 @@
 ## 1.4.0.1
 
 * Thread-safe counters types were changed from `int` to `long`, this includes `PendingChanges` and `RunningInstances`.
+* `ArrowDbTransactionScope` was updated to allow nested transaction, and prevent corruption that can be caused by multiple transactions running concurrently on the same `ArrowDb` instance.
 
 ## 1.4.0.0
 
