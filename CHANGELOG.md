@@ -1,7 +1,9 @@
 # Changelog (Sorted by Date in Descending Order)
 
-## 1.4.0.1
+## 1.5.0.0
 
+* File based serializers `FileSerializer` and `AesFileSerializer` now use a new base class implementation and have gained the ability to `journal` (maintain durability through crashes and other `IOException`, and ensure successful atomic write or complete rejection of changes), and cross-process isolation, preventing race condition that could be caused when multiple processes try to access the same `ArrowDb` file.
+  * If you had a class implementing `FileSerializer` this change may or may not break functionality and you should run tests to ensure everything still works as expected (With that said, my tests were not broken and did not require any adjusting).
 * Thread-safe counters types were changed from `int` to `long`, this includes `PendingChanges` and `RunningInstances`.
 * `ArrowDbTransactionScope` was updated to allow nested transaction, and prevent corruption that can be caused by multiple transactions running concurrently on the same `ArrowDb` instance.
 
