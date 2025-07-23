@@ -13,9 +13,7 @@ public class VersionComparisonConfig : ManualConfig
         SummaryStyle = SummaryStyle.Default.WithRatioStyle(RatioStyle.Trend);
 
         AddJob(Job.Default
-            .WithToolchain(
-                CsProjCoreToolchain.FromProject(
-                    "../../src/ArrowDbCore/ArrowDbCore.csproj"))
+            .WithToolchain(CsProjCoreToolchain.NetCoreApp90)
             .WithId("Current"));
 
         AddJob(Job.Default

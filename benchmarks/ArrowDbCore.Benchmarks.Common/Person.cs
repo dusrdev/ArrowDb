@@ -1,6 +1,6 @@
 using Bogus;
 
-namespace ArrowDbCore.Benchmarks;
+namespace ArrowDbCore.Benchmarks.Common;
 
 public sealed class Person {
     public int Id { get; set; }

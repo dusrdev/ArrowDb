@@ -1,11 +1,13 @@
+using ArrowDbCore.Benchmarks.VersionComparison;
+
 using BenchmarkDotNet.Running;
 
-namespace ArrowDbCore.Benchmarks.VersionComparison;
+BenchmarkRunner.Run<RandomOperationsBenchmarks>();
 
-public class Program
-{
-    public static void Main(string[] args)
-    {
-        BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, new VersionComparisonConfig());
-    }
-}
+// public class Program
+// {
+//     public static void Main(string[] args)
+//     {
+//         BenchmarkSwitcher.FromAssembly(typeof(Program).Assembly).Run(args, new VersionComparisonConfig());
+//     }
+// }

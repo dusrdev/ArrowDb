@@ -1,12 +1,14 @@
 using System.Diagnostics;
 using BenchmarkDotNet.Attributes;
 using Bogus;
+using ArrowDbCore.Benchmarks.Common;
+using Person = ArrowDbCore.Benchmarks.Common.Person;
 
 namespace ArrowDbCore.Benchmarks.VersionComparison;
 
 [MemoryDiagnoser(false)]
 [RankColumn]
-[MediumRunJob]
+[Config(typeof(VersionComparisonConfig))]
 public class RandomOperationsBenchmarks {
     private Person[] _items = [];
     private ArrowDb _db = default!;

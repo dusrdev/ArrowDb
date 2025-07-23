@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/ArrowDbCore/ArrowDbCore.csproj" />
+    <ProjectReference Include="..\ArrowDbCore.Benchmarks.Common\ArrowDbCore.Benchmarks.Common.csproj" />
   </ItemGroup>
 
   <ItemGroup>
