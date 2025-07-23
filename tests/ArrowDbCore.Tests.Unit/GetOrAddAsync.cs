@@ -4,7 +4,7 @@ namespace ArrowDbCore.Tests.Unit;
 
 public class GetOrAddAsync {
 #pragma warning disable xUnit1031 // Do not use blocking task operations in test method
-// this is required here for testing purposes
+    // this is required here for testing purposes
     [Fact]
     public async Task GetOrAddAsync_ReturnsSynchronously_WhenExists() {
         var db = await ArrowDb.CreateInMemory();
@@ -62,5 +62,21 @@ public class GetOrAddAsync {
         }, 1);
         Assert.False(task.IsCompletedSuccessfully);
         Assert.Equal(1, await task);
+    }
+
+    [Fact]
+    public async Task GetOrAddAsync_FailingFactory_DoesNotAddItem() {
+        // Arrange
+        var db = await ArrowDb.CreateInMemory();
+
+        // Act & Assert
+        await Assert.ThrowsAsync<InvalidOperationException>(() =>
+            db.GetOrAddAsync("key", JContext.Default.Int32, _ =>
+                ValueTask.FromException<int>(new InvalidOperationException("Factory failed"))
+            ).AsTask()
+        );
+
+        Assert.Equal(0, db.Count);
+        Assert.False(db.ContainsKey("key"));
     }
 }
