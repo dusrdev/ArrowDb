@@ -21,6 +21,12 @@ ArrowDb is a fast, lightweight, and type-safe key-value database designed for .N
 * Cross-Platform and Fully AOT-compatible
 * Super-Easy API near mirroring of `Dictionary<TKey, TValue>`
 
+### A Note on `null` Values
+
+ArrowDb enforces a "no nulls" policy by design. Attempting to `Upsert` a `null` value will be rejected and return `false`. This simplifies the developer experience by guaranteeing that if a key exists, its value is never `null`. This eliminates the need for null-checking after retrieval, leading to cleaner and more predictable application code.
+
+This policy does not affect value types (`structs`); their `default` values (e.g., `0` for an `int`) are considered valid and are stored correctly.
+
 ## Getting Started
 
 Installation is done via NuGet: `dotnet add package ArrowDbCore`
