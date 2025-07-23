@@ -83,10 +83,9 @@ await db.SerializeAsync();
 For tracking some ArrowDb internals the following properties are exposed:
 
 ```csharp
-int ArrowDb.RunningInstances;  // Number of active ArrowDb instances (static)
-int db.InstanceId;              // The id of this ArrowDb instance
+long ArrowDb.RunningInstances;  // Number of active ArrowDb instances (static)
+long db.PendingChanges;          // The number of pending changes (number of changes that have not been serialized)
 int db.Count;                   // The number of entities in the ArrowDb
-int db.PendingChanges;          // The number of pending changes (number of changes that have not been serialized)
 ```
 
 For reading the data we have the following methods:
@@ -278,7 +277,7 @@ public interface IDbSerializer {
 }
 ```
 
-The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db.
+The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic and multi-process safe writes out of the box.
 
 Being that they return a `ValueTask`, the implementations can be async. This means that you can even implement serializers to persist the db to a remote server, or cloud, or whatever else you want.
 
@@ -323,7 +322,7 @@ void SomeMethod() {
 } // the function scope ends here, and implicitly closes the scope of the transaction
 ```
 
-Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown.
+Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed.
 
 ## Subscribing to Changes
 
