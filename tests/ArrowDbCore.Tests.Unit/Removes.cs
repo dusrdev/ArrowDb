@@ -11,6 +11,20 @@ public class Removes {
     }
 
     [Fact]
+    public async Task TryRemove_NotFound_DoesNotIncrementPendingChanges() {
+        // Arrange
+        var db = await ArrowDb.CreateInMemory();
+        Assert.Equal(0, db.PendingChanges);
+
+        // Act
+        var result = db.TryRemove("non_existent_key");
+
+        // Assert
+        Assert.False(result);
+        Assert.Equal(0, db.PendingChanges);
+    }
+
+    [Fact]
     public async Task TryRemove_When_Found_Returns_True() {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);

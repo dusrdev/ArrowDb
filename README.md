@@ -21,6 +21,12 @@ ArrowDb is a fast, lightweight, and type-safe key-value database designed for .N
 * Cross-Platform and Fully AOT-compatible
 * Super-Easy API near mirroring of `Dictionary<TKey, TValue>`
 
+### A Note on `null` Values
+
+ArrowDb enforces a "no nulls" policy by design. Attempting to `Upsert` a `null` value will be rejected and return `false`. This simplifies the developer experience by guaranteeing that if a key exists, its value is never `null`. This eliminates the need for null-checking after retrieval, leading to cleaner and more predictable application code.
+
+This policy does not affect value types (`structs`); their `default` values (e.g., `0` for an `int`) are considered valid.
+
 ## Getting Started
 
 Installation is done via NuGet: `dotnet add package ArrowDbCore`
@@ -83,10 +89,9 @@ await db.SerializeAsync();
 For tracking some ArrowDb internals the following properties are exposed:
 
 ```csharp
-int ArrowDb.RunningInstances;  // Number of active ArrowDb instances (static)
-int db.InstanceId;              // The id of this ArrowDb instance
+long ArrowDb.RunningInstances;  // Number of active ArrowDb instances (static)
+long db.PendingChanges;          // The number of pending changes (number of changes that have not been serialized)
 int db.Count;                   // The number of entities in the ArrowDb
-int db.PendingChanges;          // The number of pending changes (number of changes that have not been serialized)
 ```
 
 For reading the data we have the following methods:
@@ -278,7 +283,7 @@ public interface IDbSerializer {
 }
 ```
 
-The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db.
+The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic and multi-process safe writes out of the box.
 
 Being that they return a `ValueTask`, the implementations can be async. This means that you can even implement serializers to persist the db to a remote server, or cloud, or whatever else you want.
 
@@ -323,7 +328,9 @@ void SomeMethod() {
 } // the function scope ends here, and implicitly closes the scope of the transaction
 ```
 
-Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown.
+Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed.
+
+`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner, with the built in file-based serializers (`FileSerializer` and `AesFileSerializer`) it is completely safe as they naturally operate synchronously. However if you implemented a remote serializer or an `async` one, you should use the `Async Disposable` pattern accordingly.
 
 ## Subscribing to Changes
 

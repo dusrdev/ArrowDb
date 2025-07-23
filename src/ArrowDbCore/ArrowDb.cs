@@ -10,12 +10,12 @@ public sealed partial class ArrowDb {
 	/// <summary>
 	/// Returns the number of active <see cref="ArrowDb"/> instances
 	/// </summary>
-	public static int RunningInstances => s_runningInstances;
+	public static long RunningInstances => Interlocked.Read(ref s_runningInstances);
 
 	/// <summary>
 	/// Tracks the number of running instances
 	/// </summary>
-	private static volatile int s_runningInstances;
+	private static long s_runningInstances;
 
 	/// <summary>
 	/// The backing dictionary
@@ -53,12 +53,17 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Returns the number of pending changes (number of changes that have not been serialized)
     /// </summary>
-    public int PendingChanges => _pendingChanges;
+    public long PendingChanges => Interlocked.Read(ref _pendingChanges);
 
 	/// <summary>
 	/// Thread-safe pending changes tracker
 	/// </summary>
-	private volatile int _pendingChanges;
+	private long _pendingChanges;
+
+	/// <summary>
+	/// Thread-safe transaction depth tracker
+	/// </summary>
+	internal long TransactionDepth = 0;
 
 	/// <summary>
 	/// Private Ctor
@@ -84,6 +89,9 @@ public sealed partial class ArrowDb {
 	/// <summary>
 	/// Returns a transaction scope that implicitly calls <see cref="SerializeAsync"/> when disposed
 	/// </summary>
-	/// <returns>IAsyncDisposable</returns>
-	public IAsyncDisposable BeginTransaction() => new ArrowDbTransactionScope(this);
+	/// <remarks>
+	/// The <see cref="ArrowDbTransactionScope"/> implements both <see cref="IDisposable"/> and <see cref="IAsyncDisposable"/>, allowing it to be used in both synchronous and asynchronous contexts.
+	/// </remarks>
+	/// <returns>A new <see cref="ArrowDbTransactionScope"/> instance.</returns>
+	public ArrowDbTransactionScope BeginTransaction() => new(this);
 }

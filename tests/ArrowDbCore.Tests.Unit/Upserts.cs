@@ -25,6 +25,21 @@ public class Upserts {
     }
 
     [Fact]
+    public async Task Upsert_NullValue_IsDisallowed()
+    {
+        // Arrange
+        var db = await ArrowDb.CreateInMemory();
+
+        // Act
+        var result = db.Upsert<Person?>("key", null, JContext.Default.Person);
+
+        // Assert
+        Assert.False(result);
+        Assert.Equal(0, db.Count);
+        Assert.False(db.ContainsKey("key"));
+    }
+
+    [Fact]
     public async Task Conditional_Update_When_Not_Found_Inserts() {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);

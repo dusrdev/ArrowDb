@@ -46,10 +46,25 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task DeferredSerializationScope_Serialize_After_Dispose() {
+    public async Task DeferredSerializationScope_SerializeAsync_After_DisposeAsync() {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         await using (_ = db.BeginTransaction()) {
+            db.Upsert("1", 1, JContext.Default.Int32);
+            Assert.True(db.ContainsKey("1"));
+            Assert.Equal(1, db.Count);
+            Assert.Equal(1, db.PendingChanges);
+        }
+        Assert.True(db.ContainsKey("1"));
+        Assert.Equal(1, db.Count);
+        Assert.Equal(0, db.PendingChanges);
+    }
+
+    [Fact]
+    public async Task DeferredSerializationScope_Serialize_After_Dispose() {
+        var db = await ArrowDb.CreateInMemory();
+        Assert.Equal(0, db.Count);
+        using (_ = db.BeginTransaction()) {
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);

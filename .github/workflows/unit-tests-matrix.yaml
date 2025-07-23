@@ -23,3 +23,24 @@ jobs:
       platform: ubuntu-latest
       dotnet-version: 9.0.x
       test-project-path: tests/ArrowDbCore.Tests.Integrity/ArrowDbCore.Tests.Integrity.csproj
+
+  aot-trimming:
+    env:
+      PROJECT: tests/ArrowDbCore.Tests.Analyzers/ArrowDbCore.Tests.Analyzers.csproj
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Install dependencies
+        run: dotnet restore ${{ env.PROJECT }}
+
+      - name: Build As Release
+        run: dotnet build ${{ env.PROJECT }} --configuration Release

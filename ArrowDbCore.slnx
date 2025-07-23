@@ -1,5 +1,7 @@
 <Solution>
   <Folder Name="/benchmarks/">
+    <Project Path="benchmarks/ArrowDbCore.Benchmarks.Common/ArrowDbCore.Benchmarks.Common.csproj" />
+    <Project Path="benchmarks/ArrowDbCore.Benchmarks.VersionComparison/ArrowDbCore.Benchmarks.VersionComparison.csproj" />
     <Project Path="benchmarks/ArrowDbCore.Benchmarks/ArrowDbCore.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/src/">
