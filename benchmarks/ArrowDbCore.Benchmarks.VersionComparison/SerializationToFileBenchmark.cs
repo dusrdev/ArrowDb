@@ -8,7 +8,7 @@ namespace ArrowDbCore.Benchmarks.VersionComparison;
 
 [MemoryDiagnoser(false)]
 [RankColumn]
-[MediumRunJob]
+[Config(typeof(VersionComparisonConfig))]
 public class SerializationToFileBenchmarks {
     private ArrowDb _db = default!;
 
