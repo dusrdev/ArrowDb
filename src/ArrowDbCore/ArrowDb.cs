@@ -89,6 +89,9 @@ public sealed partial class ArrowDb {
 	/// <summary>
 	/// Returns a transaction scope that implicitly calls <see cref="SerializeAsync"/> when disposed
 	/// </summary>
-	/// <returns>IAsyncDisposable</returns>
-	public IAsyncDisposable BeginTransaction() => new ArrowDbTransactionScope(this);
+	/// <remarks>
+	/// The <see cref="ArrowDbTransactionScope"/> implements both <see cref="IDisposable"/> and <see cref="IAsyncDisposable"/>, allowing it to be used in both synchronous and asynchronous contexts.
+	/// </remarks>
+	/// <returns>A new <see cref="ArrowDbTransactionScope"/> instance.</returns>
+	public ArrowDbTransactionScope BeginTransaction() => new(this);
 }

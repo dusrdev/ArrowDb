@@ -330,6 +330,8 @@ void SomeMethod() {
 
 Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed.
 
+`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner, with the built in file-based serializers (`FileSerializer` and `AesFileSerializer`) it is completely safe as they naturally operate synchronously. However if you implemented a remote serializer or an `async` one, you should use the `Async Disposable` pattern accordingly.
+
 ## Subscribing to Changes
 
 `ArrowDb` exposes an `OnChange` event that is raised whenever an operation that changes the database state, i.e, adding, updating, or removing a key, or clearing the database, is performed. The event is raised with a `ArrowDbChangeEventArgs` argument that contains the type of change that occurred.

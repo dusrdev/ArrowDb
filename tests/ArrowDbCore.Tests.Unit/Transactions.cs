@@ -25,10 +25,9 @@ public class Transactions {
                 Assert.Equal(2, db.PendingChanges);
 
                 // Still shouldn't serialize
-                await scope2.DisposeAsync();
-                var db2 = await CreateDb(path, useAes, aes);
-                Assert.Equal(0, db2.Count);
             }
+            var db2 = await CreateDb(path, useAes, aes);
+            Assert.Equal(0, db2.Count);
 
             Assert.Equal(2, db.PendingChanges);
         }

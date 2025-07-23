@@ -4,7 +4,7 @@ namespace ArrowDbCore;
 /// <summary>
 /// Provides a scope that can be used to defer serialization until the scope is disposed
 /// </summary>
-internal sealed class ArrowDbTransactionScope : IAsyncDisposable {
+public sealed class ArrowDbTransactionScope : IAsyncDisposable, IDisposable {
 	private readonly ArrowDb _database;
 	private bool _disposed;
 
@@ -12,7 +12,7 @@ internal sealed class ArrowDbTransactionScope : IAsyncDisposable {
 	/// Initializes a new instance of the <see cref="ArrowDbTransactionScope"/> class.
 	/// </summary>
 	/// <param name="database">The database instance</param>
-	public ArrowDbTransactionScope(ArrowDb database) {
+	internal ArrowDbTransactionScope(ArrowDb database) {
 		_database = database;
 		Interlocked.Increment(ref _database.TransactionDepth);
 	}
@@ -28,5 +28,16 @@ internal sealed class ArrowDbTransactionScope : IAsyncDisposable {
 			await _database.SerializeAsync().ConfigureAwait(false);
 		}
 		_disposed = true;
-    }
+	}
+
+	/// <summary>
+	/// Disposes the scope and calls <see cref="ArrowDb.SerializeAsync"/> in a blocking operation
+	/// </summary>
+	public void Dispose() {
+		var task = DisposeAsync();
+		if (task.IsCompleted) {
+			return;
+		}
+		task.GetAwaiter().GetResult();
+	}
 }
