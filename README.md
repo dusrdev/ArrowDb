@@ -307,12 +307,25 @@ In case you want to rollback the changes, you can call the following method:
 await db.RollbackAsync();
 ```
 
-`RollbackAsync` will block all writing threads, until the following is complete:
+`RollbackAsync` restores the last persisted state (as returned by your current serializer) by:
 
 1. The persisted version of the db is deserialized using the `DeserializeAsync` method of the current serializer.
 2. The db is cleared.
 3. The db source reference is atomically replaced with the persisted version.
 4. Pending changes counter is reset to 0.
+
+### Concurrency note: `RollbackAsync` and writers
+
+`RollbackAsync` is intended to be a rare operation. For best results, avoid running it concurrently with writers.
+
+To keep the write path fast, ArrowDb does not take a global lock on every write. Instead, `Upsert` detects a concurrent rollback and will return `false` if a rollback happened during the operation, indicating the update was not reliable relative to the rollback.
+
+If `Upsert` returns `false` due to a concurrent rollback, the in-memory state may or may not contain the attempted update (depending on timing). If you need the update to be applied reliably, retry the upsert after rollback completes.
+
+The same “not reliable relative to rollback” behavior applies to other mutating operations:
+
+- `TryRemove` returns `false` if a rollback occurred concurrently.
+- `TryClear` returns `false` if a rollback occurred concurrently.
 
 ### Transaction Scope
 

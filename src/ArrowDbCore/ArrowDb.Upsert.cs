@@ -39,11 +39,12 @@ public partial class ArrowDb {
 		if (value is null) {
 			return false;
 		}
+		var observedEpoch = Volatile.Read(ref StateEpoch);
 		WaitIfSerializing(); // Block if serializing
 		byte[] utf8Value = JsonSerializer.SerializeToUtf8Bytes(value, jsonTypeInfo);
 		accessor.Upsert(this, key, utf8Value);
 		OnChangeInternal(ArrowDbChangeEventArgs.Upsert); // Trigger change event
-		return true;
+		return Volatile.Read(ref StateEpoch) == observedEpoch;
 	}
 
 	/// <summary>

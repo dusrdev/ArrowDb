@@ -66,6 +66,11 @@ public sealed partial class ArrowDb {
 	internal long TransactionDepth = 0;
 
 	/// <summary>
+	/// A state epoch used to detect concurrent <see cref="RollbackAsync"/> operations in hot write paths.
+	/// </summary>
+	internal long StateEpoch = 0;
+
+	/// <summary>
 	/// Private Ctor
 	/// </summary>
 	/// <param name="source">A pre-existing or empty dictionary</param>

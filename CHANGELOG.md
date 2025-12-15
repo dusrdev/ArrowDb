@@ -4,6 +4,8 @@
 
 - Improve correctness of internal change counting to ensure that changes that happened during serialization are still tracked.
 - `TryGetValue` will now return true for `value types` that have a default value since it is a valid value for them.
+- `Upsert` can return `false` if a `RollbackAsync` occurred concurrently, indicating the write was not reliable relative to the rollback (retry after rollback completes if needed).
+- `TryRemove` and `TryClear` can return `false` if a `RollbackAsync` occurred concurrently, indicating the operation was not reliable relative to the rollback.
 
 ## 1.5.0.0
 

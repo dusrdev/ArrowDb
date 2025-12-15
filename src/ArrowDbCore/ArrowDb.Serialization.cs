@@ -40,6 +40,7 @@ public partial class ArrowDb {
 	public async Task RollbackAsync() {
 		try {
 			await Semaphore.WaitAsync();
+			Interlocked.Increment(ref StateEpoch);
 			var prevState = await Serializer.DeserializeAsync();
 			Source.Clear();
 			Interlocked.Exchange(ref Source, prevState);
