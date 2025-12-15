@@ -30,7 +30,7 @@ public partial class ArrowDb {
 			return false;
 		}
 		value = JsonSerializer.Deserialize(new ReadOnlySpan<byte>(existingReference), jsonTypeInfo)!;
-		return !EqualityComparer<TValue>.Default.Equals(value, default);
+		return typeof(TValue).IsValueType || value is not null;
 	}
 
 	/// <summary>

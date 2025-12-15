@@ -3,6 +3,7 @@
 ## 1.6.0.0
 
 - Improve correctness of internal change counting to ensure that changes that happened during serialization are still tracked.
+- `TryGetValue` will now return true for `value types` that have a default value since it is a valid value for them.
 
 ## 1.5.0.0
 
