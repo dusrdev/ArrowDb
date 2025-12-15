@@ -20,26 +20,26 @@ public class OverwriteForceClear {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-        try {
-            // load the db
-            var db = await factory();
-            // clear
-            db.Clear();
-            // add items
-            for (var j = 0; j < itemCount; j++) {
-                var person = faker.Generate();
-                var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
+	        try {
+	            // load the db
+	            var db = await factory();
+	            // clear
+	            Assert.True(db.TryClear());
+	            // add items
+	            for (var j = 0; j < itemCount; j++) {
+	                var person = faker.Generate();
+	                var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
                 db.Upsert(key, person, JContext.Default.Person);
             }
             // save
             await db.SerializeAsync();
-            // now we have sample data to verify overwrite
-            var fileSize = new FileInfo(path).Length;
-            // now we overwrite
-            db.Clear();
-            await db.SerializeAsync();
-            // clear data and overwritten (file should next to empty - aside from headers)
-            var newFileSize = new FileInfo(path).Length;
+	            // now we have sample data to verify overwrite
+	            var fileSize = new FileInfo(path).Length;
+	            // now we overwrite
+	            Assert.True(db.TryClear());
+	            await db.SerializeAsync();
+	            // clear data and overwritten (file should next to empty - aside from headers)
+	            var newFileSize = new FileInfo(path).Length;
             // check if new is smaller
             Assert.True(newFileSize < fileSize);
         } finally {

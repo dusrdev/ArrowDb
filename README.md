@@ -126,7 +126,8 @@ And removal:
 
 ```csharp
 bool db.TryRemove(ReadOnlySpan<char> key);  // removes the entry with the specified key
-void Clear();                              // removes all entries from the ArrowDb instance
+bool db.TryClear();                        // clears all entries; returns false if a concurrent RollbackAsync occurred
+void db.Clear();                           // obsolete: use TryClear()
 ```
 
 ## Optimistic Concurrency Control

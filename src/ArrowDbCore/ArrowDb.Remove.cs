@@ -34,6 +34,7 @@ public partial class ArrowDb {
 	/// <summary>
 	/// Clears the database
 	/// </summary>
+	[Obsolete("Use TryClear() instead. Clear() ignores rollback races and cannot signal if a concurrent RollbackAsync occurred.")]
 	public void Clear() {
 		_ = TryClear();
 	}
