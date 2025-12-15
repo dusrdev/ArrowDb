@@ -1,5 +1,9 @@
 # Changelog (Sorted by Date in Descending Order)
 
+## 1.6.0.0
+
+- Improve correctness of internal change counting to ensure that changes that happened during serialization are still tracked.
+
 ## 1.5.0.0
 
 - File based serializers `FileSerializer` and `AesFileSerializer` now use a new base class implementation and have gained the ability to `journal` (maintain durability through crashes and other `IOException`, and ensure successful atomic write or complete rejection of changes), and cross-process isolation, preventing race condition that could be caused when multiple processes try to access the same `ArrowDb` file.

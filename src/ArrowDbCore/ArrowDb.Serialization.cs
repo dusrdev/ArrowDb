@@ -15,8 +15,9 @@ public partial class ArrowDb {
 		}
 		try {
 			await Semaphore.WaitAsync();
+			var observedPendingChanges = Interlocked.Read(ref _pendingChanges);
 			await Serializer.SerializeAsync(Source);
-			Interlocked.Exchange(ref _pendingChanges, 0); // reset pending changes
+			Interlocked.CompareExchange(ref _pendingChanges, 0, observedPendingChanges); // reset pending changes only if unchanged
 		} finally {
 			Semaphore.Release();
 		}
