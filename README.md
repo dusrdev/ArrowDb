@@ -247,6 +247,10 @@ async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TVa
 
 If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
 
+### Concurrency Note
+
+`GetOrAddAsync` is intentionally **not atomic**. Under concurrency, `valueFactory` may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
+
 Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
 
 Similarly to `Upsert` - `GetOrAddAsync` also has an overload that accepts `TArg` and and enables closure free execution for optimal performance.

@@ -18,3 +18,7 @@ A fast, lightweight, and type-safe key-value database designed for .NET.
 This policy does not affect value types (`structs`); their `default` values (e.g., `0` for an `int`) are considered valid.
 
 Information on usage can be found in the [README](https://github.com/dusrdev/ArrowDb/blob/stable/README.md).
+
+## Concurrency note: `GetOrAddAsync`
+
+`GetOrAddAsync` is intentionally **not atomic**. Under concurrency, the factory may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
