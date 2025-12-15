@@ -67,6 +67,16 @@ public class Upserts {
     }
 
     [Fact]
+    public async Task Conditional_Update_When_Found_Default_ForValueType_StillEvaluatesCondition() {
+        var db = await ArrowDb.CreateInMemory();
+        Assert.Equal(0, db.Count);
+        db.Upsert("1", 0, JContext.Default.Int32);
+        Assert.False(db.Upsert("1", 1, JContext.Default.Int32, reference => reference != 0));
+        Assert.True(db.TryGetValue("1", JContext.Default.Int32, out var value));
+        Assert.Equal(0, value);
+    }
+
+    [Fact]
     public async Task Conditional_Update_TArg_When_Not_Found_Inserts() {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
