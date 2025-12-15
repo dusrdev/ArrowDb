@@ -26,10 +26,11 @@ This file contains repo-specific instructions for AI coding agents working in th
 - Type safety: `TryGetValue<T>`/`Upsert<T>` require a `JsonTypeInfo<T>`; passing the wrong `JsonTypeInfo` for stored bytes can throw `JsonException`.
 - Change tracking:
   - Any successful mutation calls `OnChangeInternal(...)`, which increments `_pendingChanges` and then invokes the `OnChange` event.
-  - `PendingChanges` is a `long` counter; `SerializeAsync()` resets it to `0` after a successful serialization.
+  - `PendingChanges` is a `long` counter; `SerializeAsync()` resets it to `0` only if no new changes happened during the serialization window (conditional reset to avoid losing the “needs another serialize” signal).
 - Concurrency model:
   - Normal reads/writes are lock-free at the dictionary level (`ConcurrentDictionary`).
-  - A per-instance `SemaphoreSlim` is used to block all mutations while `SerializeAsync()`/`RollbackAsync()` are running (`WaitIfSerializing()` checks `Semaphore.CurrentCount == 0`).
+  - A per-instance `SemaphoreSlim` guards `SerializeAsync()`/`RollbackAsync()`. Writers do not take the semaphore, but they do call `WaitIfSerializing()` to avoid mutating while a serialize is actively in progress.
+  - `RollbackAsync()` increments a monotonic in-memory epoch (`StateEpoch`). Mutating operations (`Upsert`, `TryRemove`, `TryClear`) detect an epoch change during the operation and return `false` to signal the mutation was not reliable relative to the rollback.
   - Multi-process safety for file serializers is implemented via a system-wide named `Mutex` in `BaseFileSerializer` (per DB path).
 - Transactions:
   - `BeginTransaction()` returns `ArrowDbTransactionScope`.
@@ -42,13 +43,13 @@ This file contains repo-specific instructions for AI coding agents working in th
 - `src/ArrowDbCore/ArrowDb.Factory.cs`: factory initializers (`CreateFromFile`, `CreateFromFileWithAes`, `CreateInMemory`, `CreateCustom`) + `GenerateTypedKey<T>(...)`.
 - `src/ArrowDbCore/ArrowDbJsonContext.cs`: internal `JsonSerializerContext` used by file serializers to (de)serialize `ConcurrentDictionary<string, byte[]>` without reflection.
 - `src/ArrowDbCore/ArrowDb.Read.cs`: read-only API (`Count`, `Keys`, `ContainsKey`, `TryGetValue<T>`).
-  - Note: `TryGetValue<T>` currently returns `false` if the deserialized value equals `default(T)`; keep this in mind when reasoning about “default values are valid” claims in docs/tests.
+  - Note: `TryGetValue<T>` returns `true` for value types even when the value is `default(T)`. For reference/nullable types it returns `false` when the deserialized value is `null`, preserving the “no null-check after `TryGetValue == true`” guarantee.
 - `src/ArrowDbCore/ArrowDb.Upsert.cs`: `Upsert` overloads + optimistic concurrency via `updateCondition`.
   - Span-vs-string keys: `Upsert(ReadOnlySpan<char> ...)` uses `Lookup[...]`; this avoids allocating a new string when updating an existing key, but inserting a non-existing key may still allocate a new string key internally. Prefer the `string` overload when the key is already a `string`.
   - Null policy: `UpsertCore` returns `false` for `null` reference values (no-`null` design).
 - `src/ArrowDbCore/ArrowDb.GetOrAdd.cs`: `GetOrAddAsync` helpers (string keys only); note the check-then-upsert is not atomic across threads (duplicate factory calls are possible under races).
-- `src/ArrowDbCore/ArrowDb.Remove.cs`: `TryRemove(ReadOnlySpan<char>)` and `Clear()`.
-- `src/ArrowDbCore/ArrowDb.Serialization.cs`: `SerializeAsync()` and `RollbackAsync()` + the `WaitIfSerializing()` gate.
+- `src/ArrowDbCore/ArrowDb.Remove.cs`: `TryRemove(ReadOnlySpan<char>)`, `TryClear()`, and `Clear()` (obsolete; use `TryClear()`).
+- `src/ArrowDbCore/ArrowDb.Serialization.cs`: `SerializeAsync()` and `RollbackAsync()` + the `WaitIfSerializing()` gate, conditional `PendingChanges` reset, and rollback epoch bump (`StateEpoch`).
 - `src/ArrowDbCore/ArrowDbTransactionScope.cs`: transaction scope that defers serialization until disposed (supports both `IDisposable` and `IAsyncDisposable`).
 - `src/ArrowDbCore/ArrowDb.IDictionaryAccessor.cs`: internal indirection used by `UpsertCore` to write via either `Source` (string keys) or `Lookup` (span keys).
 - `src/ArrowDbCore/IDbSerializer.cs`: public serializer abstraction for persisting/loading the dictionary.
