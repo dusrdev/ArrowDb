@@ -31,4 +31,14 @@ public class Reads {
         // TryGetValue should throw JsonException as deserialization into incorrect type should fail
         Assert.Throws<JsonException>(() => db.TryGetValue("ron", JContext.Default.Int32, out _));
     }
+
+    [Fact]
+    public async Task TryGetValue_Struct_ReturnsTrueForDefault() {
+        var db = await ArrowDb.CreateInMemory();
+        Assert.Equal(0, db.Count);
+        db.Upsert("int", 0, JContext.Default.Int32);
+        // db should contain the key as a value was upserted
+        Assert.True(db.TryGetValue("int", JContext.Default.Int32, out int val));
+        Assert.Equal(default, val);
+    }
 }
