@@ -117,7 +117,7 @@ public class Serialization {
             Assert.Equal(1, db.PendingChanges);
             await db.SerializeAsync();
             // clear the db (critical change)
-            db.Clear();
+            Assert.True(db.TryClear());
             Assert.False(db.ContainsKey("1"));
             Assert.Equal(0, db.Count);
             Assert.Equal(1, db.PendingChanges);

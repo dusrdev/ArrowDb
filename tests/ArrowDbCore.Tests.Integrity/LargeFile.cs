@@ -24,7 +24,7 @@ public class LargeFile {
             // load the db
             var db = await factory();
             // clear
-            db.Clear();
+            Assert.True(db.TryClear());
             // add items
             for (var j = 0; j < itemCount; j++) {
                 var person = faker.Generate();

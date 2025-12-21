@@ -32,7 +32,7 @@ public class OnChange {
         db.OnChange += (_, args) => {
             change = args.ChangeType;
         };
-        db.Clear();
+        Assert.True(db.TryClear());
         Assert.Equal(ArrowDbChangeType.Clear, change);
     }
 }

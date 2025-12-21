@@ -47,8 +47,7 @@ public abstract class BaseFileSerializer : IDbSerializer {
     public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
         _mutex.WaitOne();
         try {
-            using (var fileStream = File.Create(_tempFilePath))
-            {
+            using (var fileStream = File.Create(_tempFilePath)) {
                 SerializeData(fileStream, data);
             }
             File.Move(_tempFilePath, _dbFilePath, true);

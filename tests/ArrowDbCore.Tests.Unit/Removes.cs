@@ -52,7 +52,7 @@ public class Removes {
         db.Upsert("1", 1, JContext.Default.Int32);
         db.Upsert("2", 2, JContext.Default.Int32);
         Assert.Equal(2, db.Count);
-        db.Clear();
+        Assert.True(db.TryClear());
         Assert.False(db.ContainsKey("1"));
         Assert.False(db.ContainsKey("2"));
         Assert.False(db.TryGetValue("1", JContext.Default.Int32, out _));

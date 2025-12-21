@@ -13,8 +13,8 @@
 ArrowDb is a fast, lightweight, and type-safe key-value database designed for .NET.
 
 * Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
-* Ultra-Fast (1,000,000 random operations / ~100ms on M2 MacBook Pro)
-* Minimal-Allocation (~2KB for serialization of 1,000,000 items)
+* Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
+* Minimal-Allocation (constant ~520 bytes for serialization any db size)
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)
@@ -59,7 +59,7 @@ public class Person {
 public partial class MyJsonContext : JsonSerializerContext {}
 ```
 
-Now we can upsert (insert or update) a `Person` into the db:
+Now we can upsert (insert or update, similar to "put") a `Person` into the db:
 
 ```csharp
 var john = new Person { Id = 1, Name = "John", Surname = "Doe", Age = 42 };
@@ -103,7 +103,7 @@ bool db.TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTyp
 
 Notice that all APIs accept keys as `ReadOnlySpan<char>` to avoid unnecessary allocations. This means that if you check for a key by some slice of a string, there is no need to allocate a string just for the lookup.
 
-Upserting (adding or updating) is done via 6 overloads:
+Upserting (adding or updating, similar to "put") is done via 6 overloads:
 
 ```csharp
 bool db.Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
@@ -126,7 +126,8 @@ And removal:
 
 ```csharp
 bool db.TryRemove(ReadOnlySpan<char> key);  // removes the entry with the specified key
-void Clear();                              // removes all entries from the ArrowDb instance
+bool db.TryClear();                        // clears all entries; returns false if a concurrent RollbackAsync occurred
+void db.Clear();                           // obsolete: use TryClear()
 ```
 
 ## Optimistic Concurrency Control
@@ -247,6 +248,10 @@ async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TVa
 
 If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
 
+### Concurrency Note
+
+`GetOrAddAsync` is intentionally **not atomic**. Under concurrency, `valueFactory` may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
+
 Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
 
 Similarly to `Upsert` - `GetOrAddAsync` also has an overload that accepts `TArg` and and enables closure free execution for optimal performance.
@@ -303,12 +308,25 @@ In case you want to rollback the changes, you can call the following method:
 await db.RollbackAsync();
 ```
 
-`RollbackAsync` will block all writing threads, until the following is complete:
+`RollbackAsync` restores the last persisted state (as returned by your current serializer) by:
 
 1. The persisted version of the db is deserialized using the `DeserializeAsync` method of the current serializer.
 2. The db is cleared.
 3. The db source reference is atomically replaced with the persisted version.
 4. Pending changes counter is reset to 0.
+
+### Concurrency note: `RollbackAsync` and writers
+
+`RollbackAsync` is intended to be a rare operation. For best results, avoid running it concurrently with writers.
+
+To keep the write path fast, ArrowDb does not take a global lock on every write. Instead, `Upsert` detects a concurrent rollback and will return `false` if a rollback happened during the operation, indicating the update was not reliable relative to the rollback.
+
+If `Upsert` returns `false` due to a concurrent rollback, the in-memory state may or may not contain the attempted update (depending on timing). If you need the update to be applied reliably, retry the upsert after rollback completes.
+
+The same “not reliable relative to rollback” behavior applies to other mutating operations:
+
+- `TryRemove` returns `false` if a rollback occurred concurrently.
+- `TryClear` returns `false` if a rollback occurred concurrently.
 
 ### Transaction Scope
 

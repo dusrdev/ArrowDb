@@ -1,7 +1,11 @@
 using System.Diagnostics;
-using BenchmarkDotNet.Attributes;
-using Bogus;
+
 using ArrowDbCore.Benchmarks.Common;
+
+using BenchmarkDotNet.Attributes;
+
+using Bogus;
+
 using Person = ArrowDbCore.Benchmarks.Common.Person;
 
 namespace ArrowDbCore.Benchmarks.VersionComparison;
@@ -22,7 +26,7 @@ public class RandomOperationsBenchmarks {
             Random = new Randomizer(1337)
         };
 
-		_items = Person.GeneratePeople(Count, faker).ToArray();
+        _items = Person.GeneratePeople(Count, faker).ToArray();
 
         Trace.Assert(_items.Length == Count);
 

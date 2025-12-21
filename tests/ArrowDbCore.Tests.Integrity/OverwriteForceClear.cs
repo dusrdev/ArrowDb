@@ -24,7 +24,7 @@ public class OverwriteForceClear {
             // load the db
             var db = await factory();
             // clear
-            db.Clear();
+            Assert.True(db.TryClear());
             // add items
             for (var j = 0; j < itemCount; j++) {
                 var person = faker.Generate();
@@ -36,7 +36,7 @@ public class OverwriteForceClear {
             // now we have sample data to verify overwrite
             var fileSize = new FileInfo(path).Length;
             // now we overwrite
-            db.Clear();
+            Assert.True(db.TryClear());
             await db.SerializeAsync();
             // clear data and overwritten (file should next to empty - aside from headers)
             var newFileSize = new FileInfo(path).Length;
