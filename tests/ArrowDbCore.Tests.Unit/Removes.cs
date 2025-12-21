@@ -46,17 +46,17 @@ public class Removes {
     }
 
     [Fact]
-	    public async Task Clear_Removes_All_From_Db() {
-	        var db = await ArrowDb.CreateInMemory();
-	        Assert.Equal(0, db.Count);
-	        db.Upsert("1", 1, JContext.Default.Int32);
-	        db.Upsert("2", 2, JContext.Default.Int32);
-	        Assert.Equal(2, db.Count);
-	        Assert.True(db.TryClear());
-	        Assert.False(db.ContainsKey("1"));
-	        Assert.False(db.ContainsKey("2"));
-	        Assert.False(db.TryGetValue("1", JContext.Default.Int32, out _));
-	        Assert.False(db.TryGetValue("2", JContext.Default.Int32, out _));
-	        Assert.Equal(0, db.Count);
-	    }
+    public async Task Clear_Removes_All_From_Db() {
+        var db = await ArrowDb.CreateInMemory();
+        Assert.Equal(0, db.Count);
+        db.Upsert("1", 1, JContext.Default.Int32);
+        db.Upsert("2", 2, JContext.Default.Int32);
+        Assert.Equal(2, db.Count);
+        Assert.True(db.TryClear());
+        Assert.False(db.ContainsKey("1"));
+        Assert.False(db.ContainsKey("2"));
+        Assert.False(db.TryGetValue("1", JContext.Default.Int32, out _));
+        Assert.False(db.TryGetValue("2", JContext.Default.Int32, out _));
+        Assert.Equal(0, db.Count);
+    }
 }

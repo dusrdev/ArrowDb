@@ -25,8 +25,7 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Upsert_NullValue_IsDisallowed()
-    {
+    public async Task Upsert_NullValue_IsDisallowed() {
         // Arrange
         var db = await ArrowDb.CreateInMemory();
 

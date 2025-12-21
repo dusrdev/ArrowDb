@@ -23,13 +23,13 @@ public partial class ArrowDb {
     /// </para>
     /// </remarks>
     public async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory) {
-		if (Lookup.TryGetValue(key, out var source)) {
-			return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
-		}
-		var val = await valueFactory(key);
-		Upsert(key, val, jsonTypeInfo);
-		return val;
-	}
+        if (Lookup.TryGetValue(key, out var source)) {
+            return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
+        }
+        var val = await valueFactory(key);
+        Upsert(key, val, jsonTypeInfo);
+        return val;
+    }
 
     /// <summary>
     /// Tries to retrieve a value stored in the database under <paramref name="key"/>, if it doesn't exist, it uses the factory to create and add it, then returns it.
@@ -52,11 +52,11 @@ public partial class ArrowDb {
     /// </para>
     /// </remarks>
     public async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, ValueTask<TValue>> valueFactory, TArg factoryArgument) {
-		if (Lookup.TryGetValue(key, out var source)) {
-			return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
-		}
-		var val = await valueFactory(key, factoryArgument);
-		Upsert(key, val, jsonTypeInfo);
-		return val;
-	}
+        if (Lookup.TryGetValue(key, out var source)) {
+            return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
+        }
+        var val = await valueFactory(key, factoryArgument);
+        Upsert(key, val, jsonTypeInfo);
+        return val;
+    }
 }

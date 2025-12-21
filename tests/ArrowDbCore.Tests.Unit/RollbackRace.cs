@@ -136,4 +136,3 @@ internal sealed class RollbackRaceValueConverter : JsonConverter<RollbackRaceVal
 [JsonSourceGenerationOptions(WriteIndented = false)]
 [JsonSerializable(typeof(RollbackRaceValue))]
 internal partial class RollbackRaceJsonContext : JsonSerializerContext { }
-

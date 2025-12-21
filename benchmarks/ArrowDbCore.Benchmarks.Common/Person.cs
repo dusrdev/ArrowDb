@@ -8,14 +8,14 @@ public sealed class Person {
     public string Surname { get; set; } = string.Empty;
     public int Age { get; set; }
 
-	public static IEnumerable<Person> GeneratePeople(int count, Faker faker) {
-		for (var i = 0; i < count; i++) {
-			yield return new Person {
-				Id = i,
-				Name = faker.Name.FirstName(),
-				Surname = faker.Name.LastName(),
-				Age = faker.Random.Int(0, 100)
-			};
-		}
-	}
+    public static IEnumerable<Person> GeneratePeople(int count, Faker faker) {
+        for (var i = 0; i < count; i++) {
+            yield return new Person {
+                Id = i,
+                Name = faker.Name.FirstName(),
+                Surname = faker.Name.LastName(),
+                Age = faker.Random.Int(0, 100)
+            };
+        }
+    }
 }

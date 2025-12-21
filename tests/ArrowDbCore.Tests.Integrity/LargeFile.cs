@@ -20,15 +20,15 @@ public class LargeFile {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-	        try {
-	            // load the db
-	            var db = await factory();
-	            // clear
-	            Assert.True(db.TryClear());
-	            // add items
-	            for (var j = 0; j < itemCount; j++) {
-	                var person = faker.Generate();
-	                var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
+        try {
+            // load the db
+            var db = await factory();
+            // clear
+            Assert.True(db.TryClear());
+            // add items
+            for (var j = 0; j < itemCount; j++) {
+                var person = faker.Generate();
+                var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
                 db.Upsert(key, person, JContext.Default.Person);
             }
             // save

@@ -1,7 +1,11 @@
 using System.Diagnostics;
-using BenchmarkDotNet.Attributes;
-using Bogus;
+
 using ArrowDbCore.Benchmarks.Common;
+
+using BenchmarkDotNet.Attributes;
+
+using Bogus;
+
 using Person = ArrowDbCore.Benchmarks.Common.Person;
 
 namespace ArrowDbCore.Benchmarks.VersionComparison;
@@ -25,7 +29,7 @@ public class SerializationToFileBenchmarks {
 
         Span<char> buffer = stackalloc char[64];
 
-		foreach (var person in Person.GeneratePeople(Size, faker)) {
+        foreach (var person in Person.GeneratePeople(Size, faker)) {
             _ = person.Id.TryFormat(buffer, out var written);
             var id = buffer.Slice(0, written);
             _db.Upsert(id, person, JContext.Default.Person);

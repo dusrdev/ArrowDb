@@ -109,20 +109,20 @@ public class Serialization {
     }
 
     private static async Task File_Serializes_And_Rollback_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
-	        try {
-	            var db = await factory();
-	            db.Upsert("1", 1, JContext.Default.Int32);
-	            Assert.True(db.ContainsKey("1"));
-	            Assert.Equal(1, db.Count);
-	            Assert.Equal(1, db.PendingChanges);
-	            await db.SerializeAsync();
-	            // clear the db (critical change)
-	            Assert.True(db.TryClear());
-	            Assert.False(db.ContainsKey("1"));
-	            Assert.Equal(0, db.Count);
-	            Assert.Equal(1, db.PendingChanges);
-	            // rollback
-	            await db.RollbackAsync();
+        try {
+            var db = await factory();
+            db.Upsert("1", 1, JContext.Default.Int32);
+            Assert.True(db.ContainsKey("1"));
+            Assert.Equal(1, db.Count);
+            Assert.Equal(1, db.PendingChanges);
+            await db.SerializeAsync();
+            // clear the db (critical change)
+            Assert.True(db.TryClear());
+            Assert.False(db.ContainsKey("1"));
+            Assert.Equal(0, db.Count);
+            Assert.Equal(1, db.PendingChanges);
+            // rollback
+            await db.RollbackAsync();
             // verification
             Assert.Equal(1, db.Count);
             Assert.Equal(0, db.PendingChanges);
