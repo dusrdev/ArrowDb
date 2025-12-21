@@ -2,9 +2,9 @@
 
 A fast, lightweight, and type-safe key-value database designed for .NET.
 
-* Super-Lightweight (dll size is <= 20KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
-* Ultra-Fast (1,000,000 random operations / ~100ms on M2 MacBook Pro)
-* Minimal-Allocation (~2KB for serialization of 1,000,000 items)
+* Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
+* Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
+* Minimal-Allocation (constant ~520 bytes for serialization any db size)
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)
