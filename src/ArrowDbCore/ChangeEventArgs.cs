@@ -20,7 +20,7 @@ public sealed class ArrowDbChangeEventArgs : EventArgs {
     /// <summary>
     /// The type of change that occurred
     /// </summary>
-    public readonly ArrowDbChangeType ChangeType;
+    public ArrowDbChangeType ChangeType { get; init; }
 
     private ArrowDbChangeEventArgs(ArrowDbChangeType changeType) {
         ChangeType = changeType;

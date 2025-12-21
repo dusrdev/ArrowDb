@@ -63,12 +63,12 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Thread-safe transaction depth tracker
     /// </summary>
-    internal long TransactionDepth = 0;
+    internal long TransactionDepth;
 
     /// <summary>
     /// A state epoch used to detect concurrent <see cref="RollbackAsync"/> operations in hot write paths.
     /// </summary>
-    internal long StateEpoch = 0;
+    internal long StateEpoch;
 
     /// <summary>
     /// Private Ctor
