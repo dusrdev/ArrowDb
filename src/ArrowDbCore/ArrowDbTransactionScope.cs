@@ -34,7 +34,9 @@ public sealed class ArrowDbTransactionScope : IAsyncDisposable, IDisposable {
     /// Disposes the scope and calls <see cref="ArrowDb.SerializeAsync"/> in a blocking operation
     /// </summary>
     public void Dispose() {
+#pragma warning disable CA2012
         var task = DisposeAsync();
+#pragma warning restore CA2012
         if (task.IsCompleted) {
             return;
         }

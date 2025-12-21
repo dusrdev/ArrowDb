@@ -17,6 +17,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <NoWarn>$(NoWarn);CA1001</NoWarn>
+  </PropertyGroup>
+
+  <PropertyGroup>
     <Authors>David Shnayder</Authors>
     <Copyright>David Shnayder</Copyright>
     <PackageReadmeFile>Readme.Nuget.md</PackageReadmeFile>

@@ -5,10 +5,11 @@ namespace ArrowDbCore.Serializers;
 /// <summary>
 /// Provides a base implementation for file-based serializers that ensures atomic and multi-process safe writes.
 /// </summary>
-public abstract class BaseFileSerializer : IDbSerializer {
+public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     private readonly string _dbFilePath;
     private readonly string _tempFilePath;
     private readonly Mutex _mutex;
+    private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="BaseFileSerializer"/> class.
@@ -25,7 +26,7 @@ public abstract class BaseFileSerializer : IDbSerializer {
     /// Finalizer to ensure the system-wide mutex is released when the serializer is garbage collected.
     /// </summary>
     ~BaseFileSerializer() {
-        _mutex.Dispose();
+        Dispose();
     }
 
     /// <inheritdoc />
@@ -71,4 +72,13 @@ public abstract class BaseFileSerializer : IDbSerializer {
     /// <param name="stream">The stream to read the data from.</param>
     /// <returns>The deserialized dictionary.</returns>
     protected abstract ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream);
+
+    /// <inheritdoc/>
+    public void Dispose() {
+        if (_disposed) return;
+
+        _mutex.Dispose();
+        _disposed = true;
+        GC.SuppressFinalize(this);
+    }
 }
