@@ -13,8 +13,8 @@
 ArrowDb is a fast, lightweight, and type-safe key-value database designed for .NET.
 
 * Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
-* Ultra-Fast (1,000,000 random operations / ~100ms on M2 MacBook Pro)
-* Minimal-Allocation (~2KB for serialization of 1,000,000 items)
+* Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
+* Minimal-Allocation (constant ~520 bytes for serialization any db size)
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)
@@ -59,7 +59,7 @@ public class Person {
 public partial class MyJsonContext : JsonSerializerContext {}
 ```
 
-Now we can upsert (insert or update) a `Person` into the db:
+Now we can upsert (insert or update, similar to "put") a `Person` into the db:
 
 ```csharp
 var john = new Person { Id = 1, Name = "John", Surname = "Doe", Age = 42 };
@@ -103,7 +103,7 @@ bool db.TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTyp
 
 Notice that all APIs accept keys as `ReadOnlySpan<char>` to avoid unnecessary allocations. This means that if you check for a key by some slice of a string, there is no need to allocate a string just for the lookup.
 
-Upserting (adding or updating) is done via 6 overloads:
+Upserting (adding or updating, similar to "put") is done via 6 overloads:
 
 ```csharp
 bool db.Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo);
