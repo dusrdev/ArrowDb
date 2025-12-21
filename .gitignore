@@ -3,6 +3,12 @@
 ##
 ## Get latest from `dotnet new gitignore`
 
+# Benchmark results
+**/BenchmarkDotNet.Artifacts/results/*
+**/BenchmarkDotNet.Artifacts/*.log
+**/BenchmarkDotNet.Artifacts/*.csv
+**/BenchmarkDotNet.Artifacts/*.html
+
 # dotenv files
 .env
 
