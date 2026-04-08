@@ -39,7 +39,7 @@ var db = await ArrowDb.CreateFromFile("path.db");
 // or with dependency injection
 builder.Services.AddSingleton(_ => ArrowDb.CreateFromFile("path.db").GetAwaiter().GetResult());
 // the default DI container doesn't support async, so we hack it with GetAwaiter().GetResult()
-// in the case of ArrowDb FileSerializer, this ValueTask is actually synchronous so this is fine
+// this will block during startup while the serializer performs file I/O
 // in cases of different serializers, you can use Lazy<T> or other workarounds
 ```
 
@@ -290,7 +290,7 @@ public interface IDbSerializer {
 }
 ```
 
-The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic writes and single-owner writable file semantics out of the box.
+The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic writes, single-owner writable file semantics, and async file I/O out of the box.
 
 Being that they return a `ValueTask`, the implementations can be async. This means that you can even implement serializers to persist the db to a remote server, or cloud, or whatever else you want.
 
@@ -358,7 +358,7 @@ void SomeMethod() {
 
 Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed. If the `CancellationToken` passed to the outermost scope is canceled before disposal commits, the implicit serialize throws `OperationCanceledException` and the pending changes remain in memory until you retry `SerializeAsync` or call `RollbackAsync`.
 
-`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner, with the built in file-based serializers (`FileSerializer` and `AesFileSerializer`) it is completely safe as they naturally operate synchronously. However if you implemented a remote serializer or an `async` one, you should use the `Async Disposable` pattern accordingly.
+`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner. This works with the built-in file-based serializers, but it will block on file I/O during commit. In asynchronous code, prefer the `Async Disposable` pattern accordingly.
 
 ## Subscribing to Changes
 

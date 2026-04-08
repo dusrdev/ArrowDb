@@ -22,6 +22,33 @@ public class Cancellation {
     }
 
     [Fact]
+    public async Task CreateFromFile_WhenCanceled_ThrowsOperationCanceledException() {
+        string path = Path.GetTempFileName();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+
+        try {
+            await Assert.ThrowsAsync<OperationCanceledException>(() => ArrowDb.CreateFromFile(path, cancellationTokenSource.Token).AsTask());
+        } finally {
+            FileBackedTestHelpers.DeleteArtifacts(path);
+        }
+    }
+
+    [Fact]
+    public async Task CreateFromFileWithAes_WhenCanceled_ThrowsOperationCanceledException() {
+        string path = Path.GetTempFileName();
+        using var aes = System.Security.Cryptography.Aes.Create();
+        using var cancellationTokenSource = new CancellationTokenSource();
+        cancellationTokenSource.Cancel();
+
+        try {
+            await Assert.ThrowsAsync<OperationCanceledException>(() => ArrowDb.CreateFromFileWithAes(path, aes, cancellationTokenSource.Token).AsTask());
+        } finally {
+            FileBackedTestHelpers.DeleteArtifacts(path);
+        }
+    }
+
+    [Fact]
     public async Task SerializeAsync_WhenCanceledWhileWaitingForSemaphore_ThrowsAndDoesNotStartSecondSerialize() {
         var serializer = new CancellationSerializer();
         var db = await ArrowDb.CreateCustom(serializer);

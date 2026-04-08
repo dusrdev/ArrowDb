@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using System.Security.Cryptography;
 using Microsoft.Win32.SafeHandles;
 
 namespace ArrowDbCore.Serializers;
@@ -8,8 +9,23 @@ namespace ArrowDbCore.Serializers;
 /// and single-owner writable semantics for the underlying database file.
 /// </summary>
 public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
+    private static readonly FileStreamOptions ReadStreamOptions = new() {
+        Access = FileAccess.Read,
+        Mode = FileMode.Open,
+        Options = FileOptions.Asynchronous | FileOptions.SequentialScan,
+        Share = FileShare.Read,
+    };
+
+    private static readonly FileStreamOptions WriteStreamOptions = new() {
+        Access = FileAccess.Write,
+        Mode = FileMode.Create,
+        Options = FileOptions.Asynchronous,
+        Share = FileShare.None,
+    };
+
     private readonly string _dbFilePath;
     private readonly SafeFileHandle? _ownershipHandle;
+    private string? _lastTempFilePath;
     private bool _disposed;
 
     /// <summary>
@@ -41,31 +57,35 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     }
 
     /// <inheritdoc />
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
-        if (!File.Exists(_dbFilePath) || new FileInfo(_dbFilePath).Length == 0) {
-            return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
-        }
+    public async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
 
-        using var fileStream = File.OpenRead(_dbFilePath);
-        return DeserializeData(fileStream);
+        try {
+            await using FileStream fileStream = new(_dbFilePath, ReadStreamOptions);
+            if (fileStream.Length == 0) {
+                return new ConcurrentDictionary<string, byte[]>();
+            }
+
+            return await DeserializeDataAsync(fileStream, cancellationToken);
+        } catch (FileNotFoundException) {
+            return new ConcurrentDictionary<string, byte[]>();
+        }
     }
 
     /// <inheritdoc />
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
-        string tempFilePath = $"{_dbFilePath}.{Guid.NewGuid():N}.tmp";
+    public async ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
+        string tempFilePath = GenerateTempFilePath();
         try {
-            using (var fileStream = File.Create(tempFilePath)) {
-                SerializeData(fileStream, data);
+            await using (FileStream fileStream = new(tempFilePath, WriteStreamOptions)) {
+                await SerializeDataAsync(fileStream, data, cancellationToken);
+                await fileStream.FlushAsync(cancellationToken);
             }
 
             File.Move(tempFilePath, _dbFilePath, true);
         } finally {
-            if (File.Exists(tempFilePath)) {
-                File.Delete(tempFilePath);
-            }
+            TryDeleteFile(tempFilePath);
         }
-
-        return ValueTask.CompletedTask;
     }
 
     /// <summary>
@@ -73,14 +93,16 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     /// </summary>
     /// <param name="stream">The stream to write the data to.</param>
     /// <param name="data">The data to serialize.</param>
-    protected abstract void SerializeData(Stream stream, ConcurrentDictionary<string, byte[]> data);
+    /// <param name="cancellationToken">A cancellation token.</param>
+    protected abstract ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken);
 
     /// <summary>
     /// When overridden in a derived class, deserializes the data from the provided stream.
     /// </summary>
     /// <param name="stream">The stream to read the data from.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The deserialized dictionary.</returns>
-    protected abstract ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream);
+    protected abstract ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken);
 
     /// <inheritdoc/>
     public void Dispose() {
@@ -97,6 +119,26 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
             return File.OpenHandle(lockFilePath, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
         } catch (IOException ex) {
             throw new ArrowDbOwnershipException($"The database file '{dbFilePath}' is already owned by another process.", ex);
+        }
+    }
+
+    private string GenerateTempFilePath() {
+        string? lastTempFilePath = _lastTempFilePath;
+        string tempFilePath;
+        do {
+            tempFilePath = $"{_dbFilePath}.{RandomNumberGenerator.GetHexString(4)}.tmp";
+        } while (string.Equals(tempFilePath, lastTempFilePath, StringComparison.Ordinal));
+        _lastTempFilePath = tempFilePath;
+        return tempFilePath;
+    }
+
+    private static void TryDeleteFile(string path) {
+        try {
+            if (File.Exists(path)) {
+                File.Delete(path);
+            }
+        } catch (IOException) {
+        } catch (UnauthorizedAccessException) {
         }
     }
 }

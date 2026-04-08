@@ -25,17 +25,17 @@ public sealed class AesFileSerializer : BaseFileSerializer {
     }
 
     /// <inheritdoc />
-    protected override void SerializeData(Stream stream, ConcurrentDictionary<string, byte[]> data) {
+    protected override async ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken) {
         using var encryptor = _aes.CreateEncryptor();
-        using var cryptoStream = new CryptoStream(stream, encryptor, CryptoStreamMode.Write);
-        JsonSerializer.Serialize(cryptoStream, data, _jsonTypeInfo);
+        await using var cryptoStream = new CryptoStream(stream, encryptor, CryptoStreamMode.Write, leaveOpen: true);
+        await JsonSerializer.SerializeAsync(cryptoStream, data, _jsonTypeInfo, cancellationToken);
     }
 
     /// <inheritdoc />
-    protected override ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream) {
+    protected override async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken) {
         using var decryptor = _aes.CreateDecryptor();
-        using var cryptoStream = new CryptoStream(stream, decryptor, CryptoStreamMode.Read);
-        var res = JsonSerializer.Deserialize(cryptoStream, _jsonTypeInfo);
-        return ValueTask.FromResult(res ?? new ConcurrentDictionary<string, byte[]>());
+        await using var cryptoStream = new CryptoStream(stream, decryptor, CryptoStreamMode.Read, leaveOpen: true);
+        ConcurrentDictionary<string, byte[]>? result = await JsonSerializer.DeserializeAsync(cryptoStream, _jsonTypeInfo, cancellationToken);
+        return result ?? new ConcurrentDictionary<string, byte[]>();
     }
 }

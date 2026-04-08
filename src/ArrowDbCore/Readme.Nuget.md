@@ -30,3 +30,5 @@ ArrowDb 2.0 adds optional `CancellationToken` parameters to its async APIs, incl
 ## File-backed ownership
 
 The built-in file-backed serializers are single-owner writable. If another process already opened the same database path through ArrowDb's built-in file serializer path, the next writable open fails fast with `ArrowDbOwnershipException`.
+
+The built-in file-backed serializers also perform true async file I/O internally. Custom types inheriting from `BaseFileSerializer` should implement the async protected override surface.

@@ -9,6 +9,8 @@
 - This is a breaking release for callers implementing `IDbSerializer` or calling `GetOrAddAsync` with the old delegate shapes.
 - Built-in file-backed serializers now use single-owner writable semantics and fail fast with `ArrowDbOwnershipException` if another process already owns the same database path.
 - Removed the previous cross-process writable safety claim from the built-in file serializer path; the persisted file remains a snapshot of the owning process state.
+- Built-in file-backed serializers now perform true async file and JSON I/O internally instead of synchronous work behind async signatures.
+- This is also a breaking release for custom types inheriting `BaseFileSerializer`, which must implement the new async protected override surface.
 
 ## 1.6.0.0
 

@@ -21,13 +21,13 @@ public class FileSerializer : BaseFileSerializer {
     }
 
     /// <inheritdoc />
-    protected override void SerializeData(Stream stream, ConcurrentDictionary<string, byte[]> data) {
-        JsonSerializer.Serialize(stream, data, _jsonTypeInfo);
+    protected override async ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken) {
+        await JsonSerializer.SerializeAsync(stream, data, _jsonTypeInfo, cancellationToken);
     }
 
     /// <inheritdoc />
-    protected override ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream) {
-        var result = JsonSerializer.Deserialize(stream, _jsonTypeInfo) ?? new();
-        return ValueTask.FromResult(result);
+    protected override async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken) {
+        ConcurrentDictionary<string, byte[]>? result = await JsonSerializer.DeserializeAsync(stream, _jsonTypeInfo, cancellationToken);
+        return result ?? new ConcurrentDictionary<string, byte[]>();
     }
 }
