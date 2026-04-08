@@ -26,3 +26,7 @@ Information on usage can be found in the [README](https://github.com/dusrdev/Arr
 ## Cancellation support
 
 ArrowDb 2.0 adds optional `CancellationToken` parameters to its async APIs, including database initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and the public `IDbSerializer` contract. Custom serializer implementations should update their method signatures accordingly.
+
+## File-backed ownership
+
+The built-in file-backed serializers are single-owner writable. If another process already opened the same database path through ArrowDb's built-in file serializer path, the next writable open fails fast with `ArrowDbOwnershipException`.

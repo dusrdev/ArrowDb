@@ -12,6 +12,7 @@ public class ReadWriteCycles {
     private static async Task FileIO_Passes_ReadWriteCycles(string path, Func<ValueTask<ArrowDb>> factory) {
         const int iterations = 200;
         const int itemCount = 100;
+        ArrowDb? db = null;
 
         var faker = new Faker<Person>();
         faker.UseSeed(1337);
@@ -24,7 +25,7 @@ public class ReadWriteCycles {
         try {
             for (var i = 0; i < iterations; i++) {
                 // load the db
-                var db = await factory();
+                db = await factory();
                 // clear
                 Assert.True(db.TryClear());
                 // add items
@@ -35,11 +36,15 @@ public class ReadWriteCycles {
                 }
                 // save
                 await db.SerializeAsync();
+                FileBackedTestHelpers.ReleaseOwnership(db);
+                db = null;
             }
         } finally {
-            if (File.Exists(path)) {
-                File.Delete(path);
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
             }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
 
         // this test fails if an exception is thrown

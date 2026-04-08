@@ -7,6 +7,8 @@
 - Updated the public `IDbSerializer` contract to receive an optional `CancellationToken` for serialization and deserialization.
 - Transaction scopes can now carry a cancellation token into the outermost implicit serialize during disposal.
 - This is a breaking release for callers implementing `IDbSerializer` or calling `GetOrAddAsync` with the old delegate shapes.
+- Built-in file-backed serializers now use single-owner writable semantics and fail fast with `ArrowDbOwnershipException` if another process already owns the same database path.
+- Removed the previous cross-process writable safety claim from the built-in file serializer path; the persisted file remains a snapshot of the owning process state.
 
 ## 1.6.0.0
 

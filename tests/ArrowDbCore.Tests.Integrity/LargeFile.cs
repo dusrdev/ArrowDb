@@ -11,6 +11,8 @@ namespace ArrowDbCore.Tests.Integrity;
 public class LargeFile {
     private static async Task LargeFile_Passes_OneReadWriteCycle(string path, Func<ValueTask<ArrowDb>> factory) {
         const int itemCount = 500_000;
+        ArrowDb? db = null;
+        ArrowDb? db2 = null;
 
         var faker = new Faker<Person>();
         faker.UseSeed(1337);
@@ -22,7 +24,7 @@ public class LargeFile {
         var buffer = new char[256];
         try {
             // load the db
-            var db = await factory();
+            db = await factory();
             // clear
             Assert.True(db.TryClear());
             // add items
@@ -34,13 +36,20 @@ public class LargeFile {
             // save
             await db.SerializeAsync();
             var actualCount = db.Count;
+            FileBackedTestHelpers.ReleaseOwnership(db);
             // try to load again
-            var db2 = await factory();
+            db2 = await factory();
             Assert.Equal(actualCount, db2.Count);
         } finally {
-            if (File.Exists(path)) {
-                File.Delete(path);
+            if (db2 is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db2);
             }
+
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
+            }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
 
         // this test fails if an exception is thrown

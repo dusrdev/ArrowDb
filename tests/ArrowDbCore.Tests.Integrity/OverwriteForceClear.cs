@@ -11,6 +11,7 @@ namespace ArrowDbCore.Tests.Integrity;
 public class OverwriteForceClear {
     private static async Task SerializeOverwritesExistingFile(string path, Func<ValueTask<ArrowDb>> factory) {
         const int itemCount = 1_000;
+        ArrowDb? db = null;
 
         var faker = new Faker<Person>();
         faker.UseSeed(1337);
@@ -22,7 +23,7 @@ public class OverwriteForceClear {
         var buffer = new char[256];
         try {
             // load the db
-            var db = await factory();
+            db = await factory();
             // clear
             Assert.True(db.TryClear());
             // add items
@@ -43,9 +44,11 @@ public class OverwriteForceClear {
             // check if new is smaller
             Assert.True(newFileSize < fileSize);
         } finally {
-            if (File.Exists(path)) {
-                File.Delete(path);
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
             }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
 
         // this test fails if an exception is thrown or the file is not overwritten

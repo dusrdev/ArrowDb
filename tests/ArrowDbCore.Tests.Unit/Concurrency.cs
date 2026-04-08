@@ -12,24 +12,38 @@ public class Concurrency {
         // Arrange
         var path = Path.GetTempFileName();
         using var aes = Aes.Create();
-        var db = await CreateDb(path, useAes, aes);
-        var person = new Person { Name = "John", Age = 42, BirthDate = DateTime.UtcNow, IsMarried = false };
-        var taskCount = 100;
-        var tasks = new Task[taskCount];
+        ArrowDb? db = null;
+        ArrowDb? db2 = null;
+        try {
+            db = await CreateDb(path, useAes, aes);
+            var person = new Person { Name = "John", Age = 42, BirthDate = DateTime.UtcNow, IsMarried = false };
+            var taskCount = 100;
+            var tasks = new Task[taskCount];
 
-        // Act
-        for (var i = 0; i < taskCount; i++) {
-            var key = $"key{i}";
-            tasks[i] = Task.Run(() => db.Upsert(key, person, JContext.Default.Person));
+            // Act
+            for (var i = 0; i < taskCount; i++) {
+                var key = $"key{i}";
+                tasks[i] = Task.Run(() => db.Upsert(key, person, JContext.Default.Person));
+            }
+
+            await Task.WhenAll(tasks);
+            await db.SerializeAsync();
+            FileBackedTestHelpers.ReleaseOwnership(db);
+
+            // Assert
+            db2 = await CreateDb(path, useAes, aes);
+            Assert.Equal(taskCount, db2.Count);
+        } finally {
+            if (db2 is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db2);
+            }
+
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
+            }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
-
-        await Task.WhenAll(tasks);
-        await db.SerializeAsync();
-
-        // Assert
-        var db2 = await CreateDb(path, useAes, aes);
-        Assert.Equal(taskCount, db2.Count);
-        File.Delete(path);
     }
 
     private async Task<ArrowDb> CreateDb(string path, bool useAes, Aes? aes = null) {

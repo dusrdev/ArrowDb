@@ -11,6 +11,9 @@ public partial class ArrowDb {
     /// <param name="path">The path that the file that backs the database</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
+    /// <exception cref="ArrowDbOwnershipException">
+    /// Thrown when another process already owns the same file-backed database path.
+    /// </exception>
     public static async ValueTask<ArrowDb> CreateFromFile(string path, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
         var serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
@@ -25,6 +28,9 @@ public partial class ArrowDb {
     /// <param name="aes">The <see cref="Aes"/> instance to use</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
+    /// <exception cref="ArrowDbOwnershipException">
+    /// Thrown when another process already owns the same file-backed database path.
+    /// </exception>
     public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
         var serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);

@@ -290,7 +290,7 @@ public interface IDbSerializer {
 }
 ```
 
-The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic and multi-process safe writes out of the box.
+The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic writes and single-owner writable file semantics out of the box.
 
 Being that they return a `ValueTask`, the implementations can be async. This means that you can even implement serializers to persist the db to a remote server, or cloud, or whatever else you want.
 
@@ -318,6 +318,12 @@ await db.RollbackAsync(cancellationToken);
 2. The db is cleared.
 3. The db source reference is atomically replaced with the persisted version.
 4. Pending changes counter is reset to 0.
+
+## File-backed ownership
+
+The built-in file-backed serializers (`FileSerializer` and `AesFileSerializer`) are single-owner writable. The first process that opens a database file owns it for the lifetime of that serializer instance. A second writable open against the same path fails fast with `ArrowDbOwnershipException`.
+
+This is intentional: ArrowDb keeps the live state in-process and persists snapshots to disk. The persisted file is not a shared live database between processes.
 
 ### Concurrency note: `RollbackAsync` and writers
 

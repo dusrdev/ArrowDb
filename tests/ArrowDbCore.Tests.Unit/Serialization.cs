@@ -76,20 +76,28 @@ public class Serialization {
     }
 
     private static async Task File_Serializes_And_Deserializes_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
+        ArrowDb? db = null;
+        ArrowDb? db2 = null;
         try {
-            var db = await factory();
+            db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
             Assert.Equal(1, db.PendingChanges);
             await db.SerializeAsync();
-            var db2 = await factory();
+            FileBackedTestHelpers.ReleaseOwnership(db);
+            db2 = await factory();
             Assert.Equal(db2.Source, db.Source);
         } finally {
-            // cleanup
-            if (File.Exists(path)) {
-                File.Delete(path);
+            if (db2 is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db2);
             }
+
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
+            }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
@@ -109,8 +117,9 @@ public class Serialization {
     }
 
     private static async Task File_Serializes_And_Rollback_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
+        ArrowDb? db = null;
         try {
-            var db = await factory();
+            db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
@@ -130,10 +139,11 @@ public class Serialization {
             Assert.True(db.TryGetValue("1", JContext.Default.Int32, out var value));
             Assert.Equal(1, value);
         } finally {
-            // cleanup
-            if (File.Exists(path)) {
-                File.Delete(path);
+            if (db is not null) {
+                FileBackedTestHelpers.ReleaseOwnership(db);
             }
+
+            FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
