@@ -4,7 +4,7 @@
     <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
-    <Version>1.6.0</Version>
+    <Version>2.0.0</Version>
     <IsAotCompatible>true</IsAotCompatible>
     <IsTrimmable>true</IsTrimmable>
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>

@@ -6,14 +6,17 @@ namespace ArrowDbCore;
 /// </summary>
 public sealed class ArrowDbTransactionScope : IAsyncDisposable, IDisposable {
     private readonly ArrowDb _database;
+    private readonly CancellationToken _cancellationToken;
     private bool _disposed;
 
     /// <summary>
     /// Initializes a new instance of the <see cref="ArrowDbTransactionScope"/> class.
     /// </summary>
     /// <param name="database">The database instance</param>
-    internal ArrowDbTransactionScope(ArrowDb database) {
+    /// <param name="cancellationToken">A cancellation token for the outermost implicit serialize operation.</param>
+    internal ArrowDbTransactionScope(ArrowDb database, CancellationToken cancellationToken) {
         _database = database;
+        _cancellationToken = cancellationToken;
         Interlocked.Increment(ref _database.TransactionDepth);
     }
 
@@ -24,10 +27,11 @@ public sealed class ArrowDbTransactionScope : IAsyncDisposable, IDisposable {
         if (_disposed) {
             return;
         }
-        if (Interlocked.Decrement(ref _database.TransactionDepth) == 0) {
-            await _database.SerializeAsync().ConfigureAwait(false);
-        }
+
         _disposed = true;
+        if (Interlocked.Decrement(ref _database.TransactionDepth) == 0) {
+            await _database.SerializeAsync(_cancellationToken).ConfigureAwait(false);
+        }
     }
 
     /// <summary>
@@ -37,7 +41,7 @@ public sealed class ArrowDbTransactionScope : IAsyncDisposable, IDisposable {
 #pragma warning disable CA2012
         var task = DisposeAsync();
 #pragma warning restore CA2012
-        if (task.IsCompleted) {
+        if (task.IsCompletedSuccessfully) {
             return;
         }
         task.GetAwaiter().GetResult();

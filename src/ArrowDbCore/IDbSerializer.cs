@@ -9,11 +9,13 @@ public interface IDbSerializer {
     /// <summary>
     /// Deserializes the database from the underlying storage
     /// </summary>
-    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync();
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Serializes the database to the underlying storage
     /// </summary>
     /// <param name="data">The data to serialize</param>
-    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data);
+    /// <param name="cancellationToken">A cancellation token.</param>
+    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default);
 }

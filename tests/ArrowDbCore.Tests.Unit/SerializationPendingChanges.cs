@@ -53,11 +53,11 @@ public class SerializationPendingChanges {
         public readonly TaskCompletionSource SerializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public readonly TaskCompletionSource AllowSerializeToFinish = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
-        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync() {
+        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
 
-        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
+        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
             SerializeStarted.TrySetResult();
             return new ValueTask(AllowSerializeToFinish.Task);
         }

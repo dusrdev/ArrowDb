@@ -11,6 +11,7 @@ public partial class ArrowDb {
     /// <param name="key">The key at which to find or add the value</param>
     /// <param name="jsonTypeInfo">The json type info for the value type</param>
     /// <param name="valueFactory">The function used to generate a value for the key</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The value after finding or adding it</returns>
     /// <remarks>
     /// <para>
@@ -22,11 +23,14 @@ public partial class ArrowDb {
     /// If you need single-invocation semantics for <paramref name="valueFactory"/> (e.g. the factory has side-effects or is expensive), guard the call site with a keyed lock.
     /// </para>
     /// </remarks>
-    public async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory) {
+    public async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default) {
         if (Lookup.TryGetValue(key, out var source)) {
             return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
         }
-        var val = await valueFactory(key);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var val = await valueFactory(key, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         Upsert(key, val, jsonTypeInfo);
         return val;
     }
@@ -40,6 +44,7 @@ public partial class ArrowDb {
     /// <param name="jsonTypeInfo">The json type info for the value type</param>
     /// <param name="valueFactory">The function used to generate a value for the key</param>
     /// <param name="factoryArgument">An argument that could be provided to the valueFactory function to avoid a closure</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>The value after finding or adding it</returns>
     /// <remarks>
     /// <para>
@@ -51,11 +56,14 @@ public partial class ArrowDb {
     /// If you need single-invocation semantics for <paramref name="valueFactory"/> (e.g. the factory has side-effects or is expensive), guard the call site with a keyed lock.
     /// </para>
     /// </remarks>
-    public async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, ValueTask<TValue>> valueFactory, TArg factoryArgument) {
+    public async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, CancellationToken, ValueTask<TValue>> valueFactory, TArg factoryArgument, CancellationToken cancellationToken = default) {
         if (Lookup.TryGetValue(key, out var source)) {
             return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
         }
-        var val = await valueFactory(key, factoryArgument);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        var val = await valueFactory(key, factoryArgument, cancellationToken);
+        cancellationToken.ThrowIfCancellationRequested();
         Upsert(key, val, jsonTypeInfo);
         return val;
     }

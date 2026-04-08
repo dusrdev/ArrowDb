@@ -1,5 +1,13 @@
 # Changelog (Sorted by Date in Descending Order)
 
+## 2.0.0.0
+
+- Added optional `CancellationToken` parameters to ArrowDb async APIs, including factory initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and `BeginTransaction`.
+- Updated `GetOrAddAsync` factory delegates to receive the active `CancellationToken`.
+- Updated the public `IDbSerializer` contract to receive an optional `CancellationToken` for serialization and deserialization.
+- Transaction scopes can now carry a cancellation token into the outermost implicit serialize during disposal.
+- This is a breaking release for callers implementing `IDbSerializer` or calling `GetOrAddAsync` with the old delegate shapes.
+
 ## 1.6.0.0
 
 - Improve correctness of internal change counting to ensure that changes that happened during serialization are still tracked.

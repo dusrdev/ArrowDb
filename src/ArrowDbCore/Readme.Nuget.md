@@ -22,3 +22,7 @@ Information on usage can be found in the [README](https://github.com/dusrdev/Arr
 ## Concurrency note: `GetOrAddAsync`
 
 `GetOrAddAsync` is intentionally **not atomic**. Under concurrency, the factory may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
+
+## Cancellation support
+
+ArrowDb 2.0 adds optional `CancellationToken` parameters to its async APIs, including database initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and the public `IDbSerializer` contract. Custom serializer implementations should update their method signatures accordingly.

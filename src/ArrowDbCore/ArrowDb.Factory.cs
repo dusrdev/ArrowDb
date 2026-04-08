@@ -9,10 +9,12 @@ public partial class ArrowDb {
     /// Initializes a file/disk backed database at the specified path
     /// </summary>
     /// <param name="path">The path that the file that backs the database</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateFromFile(string path) {
+    public static async ValueTask<ArrowDb> CreateFromFile(string path, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync();
+        var data = await serializer.DeserializeAsync(cancellationToken);
         return new ArrowDb(data, serializer);
     }
 
@@ -21,20 +23,24 @@ public partial class ArrowDb {
     /// </summary>
     /// <param name="path">The path that the file that backs the database</param>
     /// <param name="aes">The <see cref="Aes"/> instance to use</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes) {
+    public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync();
+        var data = await serializer.DeserializeAsync(cancellationToken);
         return new ArrowDb(data, serializer);
     }
 
     /// <summary>
     /// Initializes an in-memory database
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateInMemory() {
+    public static async ValueTask<ArrowDb> CreateInMemory(CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new InMemorySerializer();
-        var data = await serializer.DeserializeAsync();
+        var data = await serializer.DeserializeAsync(cancellationToken);
         return new ArrowDb(data, serializer);
     }
 
@@ -42,9 +48,11 @@ public partial class ArrowDb {
     /// Initializes a database with a custom <see cref="IDbSerializer"/> implementation
     /// </summary>
     /// <param name="serializer">A custom <see cref="IDbSerializer"/> implementation</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer) {
-        var data = await serializer.DeserializeAsync();
+    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
+        var data = await serializer.DeserializeAsync(cancellationToken);
         return new ArrowDb(data, serializer);
     }
 

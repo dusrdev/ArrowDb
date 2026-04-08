@@ -30,7 +30,7 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     }
 
     /// <inheritdoc />
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync() {
+    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
         if (!File.Exists(_dbFilePath) || new FileInfo(_dbFilePath).Length == 0) {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
@@ -45,7 +45,7 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     }
 
     /// <inheritdoc />
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) {
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
         _mutex.WaitOne();
         try {
             using (var fileStream = File.Create(_tempFilePath)) {

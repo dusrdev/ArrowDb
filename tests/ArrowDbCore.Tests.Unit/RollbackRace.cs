@@ -63,7 +63,7 @@ internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
 
     public void BlockNextDeserialize() => Interlocked.Exchange(ref _blockNextDeserialize, 1);
 
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync() {
+    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
         if (Interlocked.Exchange(ref _blockNextDeserialize, 0) == 0) {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
@@ -77,7 +77,7 @@ internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
         return new ConcurrentDictionary<string, byte[]>();
     }
 
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data) => ValueTask.CompletedTask;
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
 }
 
 internal sealed class RollbackRaceHooks {

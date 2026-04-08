@@ -31,7 +31,7 @@ This policy does not affect value types (`structs`); their `default` values (e.g
 
 Installation is done via NuGet: `dotnet add package ArrowDbCore`
 
-Initializing the db is done via the factory methods, they return the instance as `ValueTask` and may or may not be asynchronous depending on the selected serializer implementation. The default serializer is `FileSerializer`, which serializes the db to a file on disk. The following example demonstrates its usage, and more details on serializers will be discussed later.
+Initializing the db is done via the factory methods, they return the instance as `ValueTask` and may or may not be asynchronous depending on the selected serializer implementation. The default serializer is `FileSerializer`, which serializes the db to a file on disk. These async APIs accept an optional `CancellationToken`. The following example demonstrates the basic usage, and more details on serializers will be discussed later.
 
 ```csharp
 // manual instance creation
@@ -82,6 +82,8 @@ Up until now, the data was stored in-memory, to finalize and persist the changes
 
 ```csharp
 await db.SerializeAsync();
+// or
+await db.SerializeAsync(cancellationToken);
 ```
 
 ## APIs
@@ -242,11 +244,11 @@ A common code pattern for caching usually consists of some `GetOrAdd` method, th
 `ArrowDb` supports this via the `async ValueTask` method:
 
 ```csharp
-async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory);
-async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, ValueTask<TValue>> valueFactory, TArg factoryArgument);
+async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default);
+async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, CancellationToken, ValueTask<TValue>> valueFactory, TArg factoryArgument, CancellationToken cancellationToken = default);
 ```
 
-If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
+If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will receive the key and the supplied `CancellationToken`, produce the value, `Upsert` it, then return it.
 
 ### Concurrency Note
 
@@ -283,8 +285,8 @@ The `IDbSerializer` is exposed and can be used to implement custom serializers:
 
 ```csharp
 public interface IDbSerializer {
-    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync();
-    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data);
+    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default);
+    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default);
 }
 ```
 
@@ -306,6 +308,8 @@ In case you want to rollback the changes, you can call the following method:
 
 ```csharp
 await db.RollbackAsync();
+// or
+await db.RollbackAsync(cancellationToken);
 ```
 
 `RollbackAsync` restores the last persisted state (as returned by your current serializer) by:
@@ -335,18 +339,18 @@ While the above definition explains how users can manually control the transacti
 ```csharp
 var db = await ArrowDb.CreateFromFile("path.db");
 // this uses a "using" statement.
-await using (var scope = db.BeginTransaction()) {
+await using (var scope = db.BeginTransaction(cancellationToken)) {
     db.Upsert(john.Name, john, MyJsonContext.Default.Person);
 }
 // the scope was disposed, and SerializeAsync was called implicitly
 // The same also works with a "using" declaration, that will bind to the containing scope
 void SomeMethod() {
-    await using var scope = db.BeginTransaction();
+    await using var scope = db.BeginTransaction(cancellationToken);
     db.Upsert(john.Name, john, MyJsonContext.Default.Person);
 } // the function scope ends here, and implicitly closes the scope of the transaction
 ```
 
-Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed.
+Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed. If the `CancellationToken` passed to the outermost scope is canceled before disposal commits, the implicit serialize throws `OperationCanceledException` and the pending changes remain in memory until you retry `SerializeAsync` or call `RollbackAsync`.
 
 `ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner, with the built in file-based serializers (`FileSerializer` and `AesFileSerializer`) it is completely safe as they naturally operate synchronously. However if you implemented a remote serializer or an `async` one, you should use the `Async Disposable` pattern accordingly.
 

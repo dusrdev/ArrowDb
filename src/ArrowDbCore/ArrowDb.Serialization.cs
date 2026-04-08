@@ -9,14 +9,16 @@ public partial class ArrowDb {
     /// <remarks>
     /// If there are no pending updates, this method does nothing, otherwise it serializes the database and resets the pending updates counter
     /// </remarks>
-    public async Task SerializeAsync() {
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public async Task SerializeAsync(CancellationToken cancellationToken = default) {
         if (Interlocked.Read(ref _pendingChanges) == 0) {
             return;
         }
+
+        await Semaphore.WaitAsync(cancellationToken);
         try {
-            await Semaphore.WaitAsync();
             var observedPendingChanges = Interlocked.Read(ref _pendingChanges);
-            await Serializer.SerializeAsync(Source);
+            await Serializer.SerializeAsync(Source, cancellationToken);
             Interlocked.CompareExchange(ref _pendingChanges, 0, observedPendingChanges); // reset pending changes only if unchanged
         } finally {
             Semaphore.Release();
@@ -37,11 +39,12 @@ public partial class ArrowDb {
     /// <summary>
     /// Rolls the entire database to the last persisted state
     /// </summary>
-    public async Task RollbackAsync() {
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public async Task RollbackAsync(CancellationToken cancellationToken = default) {
+        await Semaphore.WaitAsync(cancellationToken);
         try {
-            await Semaphore.WaitAsync();
             Interlocked.Increment(ref StateEpoch);
-            var prevState = await Serializer.DeserializeAsync();
+            var prevState = await Serializer.DeserializeAsync(cancellationToken);
             Source.Clear();
             Interlocked.Exchange(ref Source, prevState);
             Lookup = Source.GetAlternateLookup<ReadOnlySpan<char>>();
