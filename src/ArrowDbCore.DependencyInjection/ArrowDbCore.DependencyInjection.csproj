@@ -1,0 +1,41 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net9.0;net10.0</TargetFrameworks>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Version>2.0.0</Version>
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <GenerateDocumentationFile>True</GenerateDocumentationFile>
+    <PackageId>ArrowDb.DependencyInjection</PackageId>
+    <Title>ArrowDb.DependencyInjection</Title>
+    <Description>Hosted dependency injection support for ArrowDb</Description>
+    <RootNamespace>ArrowDbCore.DependencyInjection</RootNamespace>
+    <PackageReadmeFile>Readme.Nuget.md</PackageReadmeFile>
+    <PackageLicenseFile>LICENSE.txt</PackageLicenseFile>
+    <PackageProjectUrl>https://github.com/dusrdev/ArrowDb</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/dusrdev/ArrowDb</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+    <PackageTags>Database;DependencyInjection;Hosting;NoSql;KeyValuePair</PackageTags>
+    <Authors>David Shnayder</Authors>
+    <Copyright>David Shnayder</Copyright>
+    <PublishRepositoryUrl>true</PublishRepositoryUrl>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Include="../ArrowDbCore/LICENSE.txt" Pack="true" PackagePath="LICENSE.txt" Link="LICENSE.txt" />
+    <None Include="Readme.Nuget.md" Pack="true" PackagePath="Readme.Nuget.md" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../ArrowDbCore/ArrowDbCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.*" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" Version="10.0.*" />
+    <PackageReference Include="Microsoft.SourceLink.GitHub" Version="10.0.*" PrivateAssets="All" />
+  </ItemGroup>
+</Project>

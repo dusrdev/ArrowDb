@@ -50,16 +50,29 @@ public class SerializationPendingChanges {
     }
 
     private sealed class BlockingSerializer : IDbSerializer {
+        private bool _disposed;
+
         public readonly TaskCompletionSource SerializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public readonly TaskCompletionSource AllowSerializeToFinish = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+        public bool IsDisposed => _disposed;
+
         public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
 
         public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+            ObjectDisposedException.ThrowIf(_disposed, this);
             SerializeStarted.TrySetResult();
             return new ValueTask(AllowSerializeToFinish.Task);
+        }
+
+        public void Dispose() => _disposed = true;
+
+        public ValueTask DisposeAsync() {
+            _disposed = true;
+            return ValueTask.CompletedTask;
         }
     }
 

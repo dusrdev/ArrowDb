@@ -27,6 +27,14 @@ Information on usage can be found in the [README](https://github.com/dusrdev/Arr
 
 ArrowDb 2.0 adds optional `CancellationToken` parameters to its async APIs, including database initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and the public `IDbSerializer` contract. Custom serializer implementations should update their method signatures accordingly.
 
+## Hosted dependency injection
+
+Hosted DI integration is provided by the companion package `ArrowDb.DependencyInjection`. That package exposes `IArrowDbProvider`, the public generic `ArrowDbProvider<TSerializer>`, and an optional hosted-service primer for eager startup initialization.
+
+## Serializer disposal
+
+`IDbSerializer` now tracks `IsDisposed` and implements both `IDisposable` and `IAsyncDisposable`. `ArrowDb.CreateCustom(...)` also has an overload that accepts `disposeSerializer` so serializer ownership can stay with either the database instance or the surrounding host/integration.
+
 ## File-backed ownership
 
 The built-in file-backed serializers are single-owner writable. If another process already opened the same database path through ArrowDb's built-in file serializer path, the next writable open fails fast with `ArrowDbOwnershipException`.

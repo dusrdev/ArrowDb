@@ -11,6 +11,8 @@ public partial class ArrowDb {
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token.</param>
     public async Task SerializeAsync(CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+
         if (Interlocked.Read(ref _pendingChanges) == 0) {
             return;
         }
@@ -41,6 +43,8 @@ public partial class ArrowDb {
     /// </summary>
     /// <param name="cancellationToken">A cancellation token.</param>
     public async Task RollbackAsync(CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+
         await Semaphore.WaitAsync(cancellationToken);
         try {
             Interlocked.Increment(ref StateEpoch);

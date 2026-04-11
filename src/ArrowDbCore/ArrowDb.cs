@@ -38,6 +38,11 @@ public sealed partial class ArrowDb {
     internal readonly IDbSerializer Serializer;
 
     /// <summary>
+    /// Indicates whether this instance owns the serializer lifetime.
+    /// </summary>
+    internal readonly bool DisposeSerializer;
+
+    /// <summary>
     /// An event that is raised when any operation was performed that changes the database state, i.e, adding, updating, or removing a key, or clearing the database
     /// </summary>
     public event EventHandler<ArrowDbChangeEventArgs>? OnChange;
@@ -75,10 +80,12 @@ public sealed partial class ArrowDb {
     /// </summary>
     /// <param name="source">A pre-existing or empty dictionary</param>
     /// <param name="serializer">A serializer implementation</param>
-    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer) {
+    /// <param name="disposeSerializer">Whether this instance owns the serializer lifetime.</param>
+    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer, bool disposeSerializer) {
         Source = source;
         Lookup = Source.GetAlternateLookup<ReadOnlySpan<char>>();
         Serializer = serializer;
+        DisposeSerializer = disposeSerializer;
         Interlocked.Increment(ref s_runningInstances);
         Semaphore = new SemaphoreSlim(1, 1);
     }
@@ -87,8 +94,12 @@ public sealed partial class ArrowDb {
     /// Finalizer (called when the instance is garbage collected)
     /// </summary>
     ~ArrowDb() {
-        Interlocked.Decrement(ref s_runningInstances);
+        if (DisposeSerializer)
+            Serializer.Dispose();
+
         Semaphore.Dispose();
+
+        Interlocked.Decrement(ref s_runningInstances);
     }
 
     /// <summary>
@@ -99,5 +110,8 @@ public sealed partial class ArrowDb {
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token for the outermost implicit serialize operation.</param>
     /// <returns>A new <see cref="ArrowDbTransactionScope"/> instance.</returns>
-    public ArrowDbTransactionScope BeginTransaction(CancellationToken cancellationToken = default) => new(this, cancellationToken);
+    public ArrowDbTransactionScope BeginTransaction(CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+        return new(this, cancellationToken);
+    }
 }

@@ -57,13 +57,17 @@ public class RollbackRace {
 
 internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
     private int _blockNextDeserialize;
+    private bool _disposed;
 
     public readonly TaskCompletionSource RollbackDeserializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public readonly TaskCompletionSource AllowRollbackDeserializeToReturn = new(TaskCreationOptions.RunContinuationsAsynchronously);
 
+    public bool IsDisposed => _disposed;
+
     public void BlockNextDeserialize() => Interlocked.Exchange(ref _blockNextDeserialize, 1);
 
     public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (Interlocked.Exchange(ref _blockNextDeserialize, 0) == 0) {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
@@ -77,7 +81,17 @@ internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
         return new ConcurrentDictionary<string, byte[]>();
     }
 
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) => ValueTask.CompletedTask;
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return ValueTask.CompletedTask;
+    }
+
+    public void Dispose() => _disposed = true;
+
+    public ValueTask DisposeAsync() {
+        _disposed = true;
+        return ValueTask.CompletedTask;
+    }
 }
 
 internal sealed class RollbackRaceHooks {

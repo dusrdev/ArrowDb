@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Security.Cryptography;
+
 using Microsoft.Win32.SafeHandles;
 
 namespace ArrowDbCore.Serializers;
@@ -8,7 +9,7 @@ namespace ArrowDbCore.Serializers;
 /// Provides a base implementation for file-based serializers that ensures atomic writes
 /// and single-owner writable semantics for the underlying database file.
 /// </summary>
-public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
+public abstract class BaseFileSerializer : IDbSerializer {
     private static readonly FileStreamOptions ReadStreamOptions = new() {
         Access = FileAccess.Read,
         Mode = FileMode.Open,
@@ -49,15 +50,12 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     /// Finalizer to ensure the ownership handle is released when the serializer is garbage collected.
     /// </summary>
     ~BaseFileSerializer() {
-        try {
-            _ownershipHandle?.Dispose();
-        } catch {
-            // Finalizers must never throw.
-        }
+        Dispose(disposing: false);
     }
 
     /// <inheritdoc />
     public async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
 
         try {
@@ -74,6 +72,7 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
 
     /// <inheritdoc />
     public async ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         cancellationToken.ThrowIfCancellationRequested();
         string tempFilePath = GenerateTempFilePath();
         try {
@@ -104,13 +103,41 @@ public abstract class BaseFileSerializer : IDbSerializer, IDisposable {
     /// <returns>The deserialized dictionary.</returns>
     protected abstract ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken);
 
+    /// <inheritdoc />
+    public bool IsDisposed => _disposed;
+
     /// <inheritdoc/>
     public void Dispose() {
-        if (_disposed) return;
+        if (_disposed) {
+            return;
+        }
+
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+    }
+
+    /// <inheritdoc/>
+    public ValueTask DisposeAsync() {
+        if (_disposed) {
+            return ValueTask.CompletedTask;
+        }
+
+        Dispose(disposing: true);
+        GC.SuppressFinalize(this);
+        return ValueTask.CompletedTask;
+    }
+
+    /// <summary>
+    /// Releases serializer resources.
+    /// </summary>
+    /// <param name="disposing">Indicates whether disposal was triggered explicitly.</param>
+    protected virtual void Dispose(bool disposing) {
+        if (_disposed) {
+            return;
+        }
 
         _ownershipHandle?.Dispose();
         _disposed = true;
-        GC.SuppressFinalize(this);
     }
 
     private static SafeFileHandle AcquireOwnershipHandle(string dbFilePath) {

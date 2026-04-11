@@ -17,8 +17,7 @@ public partial class ArrowDb {
     public static async ValueTask<ArrowDb> CreateFromFile(string path, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
         var serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync(cancellationToken);
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
@@ -34,8 +33,7 @@ public partial class ArrowDb {
     public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
         var serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync(cancellationToken);
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
@@ -46,8 +44,7 @@ public partial class ArrowDb {
     public static async ValueTask<ArrowDb> CreateInMemory(CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
         var serializer = new InMemorySerializer();
-        var data = await serializer.DeserializeAsync(cancellationToken);
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
@@ -58,8 +55,19 @@ public partial class ArrowDb {
     /// <returns>A database instance</returns>
     public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer, CancellationToken cancellationToken = default) {
         cancellationToken.ThrowIfCancellationRequested();
-        var data = await serializer.DeserializeAsync(cancellationToken);
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
+    }
+
+    /// <summary>
+    /// Initializes a database with a custom <see cref="IDbSerializer"/> implementation
+    /// </summary>
+    /// <param name="serializer">A custom <see cref="IDbSerializer"/> implementation</param>
+    /// <param name="disposeSerializer">Whether the returned <see cref="ArrowDb"/> instance owns the serializer lifetime.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A database instance</returns>
+    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken = default) {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await CreateFromSerializer(serializer, disposeSerializer, cancellationToken);
     }
 
     /// <summary>
@@ -87,5 +95,15 @@ public partial class ArrowDb {
         /// The name of the type of T
         /// </summary>
         public static readonly string TypeName = typeof(T).Name;
+    }
+
+    private static async ValueTask<ArrowDb> CreateFromSerializer(IDbSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken) {
+        try {
+            var data = await serializer.DeserializeAsync(cancellationToken);
+            return new ArrowDb(data, serializer, disposeSerializer);
+        } catch {
+            await serializer.DisposeAsync();
+            throw;
+        }
     }
 }

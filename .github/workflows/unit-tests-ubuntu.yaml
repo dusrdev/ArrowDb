@@ -8,7 +8,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        project: [tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj, tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj]
+        project:
+          [
+            tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj,
+            tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj,
+            tests/ArrowDbCore.DependencyInjection.Tests/ArrowDbCore.DependencyInjection.Tests.csproj
+          ]
     uses: dusrdev/actions/.github/workflows/reusable-dotnet-test-mtp.yaml@main
     with:
       platform: ubuntu-latest
