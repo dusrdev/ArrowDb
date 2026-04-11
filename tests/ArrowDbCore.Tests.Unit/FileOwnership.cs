@@ -6,50 +6,61 @@ using ArrowDbCore.Tests.Probes.FileOwnership;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public sealed class FileOwnership {
+public sealed class FileOwnership
+{
     [Fact]
-    public void FileSerializer_WhenPathAlreadyOwned_ThrowsInConstructor() {
+    public void FileSerializer_WhenPathAlreadyOwned_ThrowsInConstructor()
+    {
         string path = Path.GetTempFileName();
         FileSerializer? serializer = null;
 
-        try {
+        try
+        {
             serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
 
             ArrowDbOwnershipException exception = Assert.Throws<ArrowDbOwnershipException>(() =>
                 new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray));
 
             Assert.Contains(path, exception.Message, StringComparison.Ordinal);
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public void AesFileSerializer_WhenPathAlreadyOwned_ThrowsInConstructor() {
+    public void AesFileSerializer_WhenPathAlreadyOwned_ThrowsInConstructor()
+    {
         string path = Path.GetTempFileName();
         using Aes aes = Aes.Create();
         AesFileSerializer? serializer = null;
 
-        try {
+        try
+        {
             serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
 
             ArrowDbOwnershipException exception = Assert.Throws<ArrowDbOwnershipException>(() =>
                 new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray));
 
             Assert.Contains(path, exception.Message, StringComparison.Ordinal);
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task CreateFromFile_WhenOwnedByAnotherProcess_ThrowsUntilOwnerExits() {
+    public async Task CreateFromFile_WhenOwnedByAnotherProcess_ThrowsUntilOwnerExits()
+    {
         string path = Path.GetTempFileName();
         Process? process = null;
 
-        try {
+        try
+        {
             process = StartOwnershipProbe(path);
             await WaitForReady(process);
 
@@ -60,8 +71,11 @@ public sealed class FileOwnership {
 
             ArrowDb db = await ArrowDb.CreateFromFile(path);
             FileBackedTestHelpers.ReleaseOwnership(db);
-        } finally {
-            if (process is not null) {
+        }
+        finally
+        {
+            if (process is not null)
+            {
                 process.Dispose();
             }
 
@@ -69,9 +83,11 @@ public sealed class FileOwnership {
         }
     }
 
-    private static Process StartOwnershipProbe(string path) {
+    private static Process StartOwnershipProbe(string path)
+    {
         string probeAssemblyPath = typeof(OwnershipProbeMarker).Assembly.Location;
-        var startInfo = new ProcessStartInfo("dotnet") {
+        var startInfo = new ProcessStartInfo("dotnet")
+        {
             RedirectStandardInput = true,
             RedirectStandardOutput = true,
             RedirectStandardError = true,
@@ -82,9 +98,11 @@ public sealed class FileOwnership {
         return Process.Start(startInfo) ?? throw new InvalidOperationException("Failed to start ownership probe process.");
     }
 
-    private static async Task WaitForReady(Process process) {
+    private static async Task WaitForReady(Process process)
+    {
         string? line = await process.StandardOutput.ReadLineAsync(TestContext.Current.CancellationToken);
-        if (string.Equals(line, "READY", StringComparison.Ordinal)) {
+        if (string.Equals(line, "READY", StringComparison.Ordinal))
+        {
             return;
         }
 

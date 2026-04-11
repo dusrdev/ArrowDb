@@ -1,8 +1,11 @@
 namespace ArrowDbCore.Tests.Probes.FileOwnership;
 
-internal static class Program {
-    private static async Task<int> Main(string[] args) {
-        if (args.Length != 2 || !string.Equals(args[0], "hold", StringComparison.Ordinal)) {
+internal static class Program
+{
+    private static async Task<int> Main(string[] args)
+    {
+        if (args.Length != 2 || !string.Equals(args[0], "hold", StringComparison.Ordinal))
+        {
             Console.Error.WriteLine("Usage: hold <path>");
             return 1;
         }

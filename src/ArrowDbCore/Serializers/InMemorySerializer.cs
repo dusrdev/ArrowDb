@@ -6,7 +6,8 @@ namespace ArrowDbCore.Serializers;
 /// <summary>
 /// An in-memory serializer (does nothing)
 /// </summary>
-public sealed class InMemorySerializer : IDbSerializer {
+public sealed class InMemorySerializer : IDbSerializer
+{
     private bool _disposed;
 
     /// <inheritdoc />
@@ -15,7 +16,8 @@ public sealed class InMemorySerializer : IDbSerializer {
     /// <summary>
     /// Returns an empty dictionary
     /// </summary>
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
     }
@@ -23,18 +25,21 @@ public sealed class InMemorySerializer : IDbSerializer {
     /// <summary>
     /// Does nothing
     /// </summary>
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return ValueTask.CompletedTask;
     }
 
     /// <inheritdoc />
-    public void Dispose() {
+    public void Dispose()
+    {
         _disposed = true;
     }
 
     /// <inheritdoc />
-    public ValueTask DisposeAsync() {
+    public ValueTask DisposeAsync()
+    {
         Dispose();
         return ValueTask.CompletedTask;
     }

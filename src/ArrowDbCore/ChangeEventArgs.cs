@@ -3,7 +3,8 @@ namespace ArrowDbCore;
 /// <summary>
 /// An argument that is passed to the <see cref="ArrowDb.OnChange"/> event
 /// </summary>
-public sealed class ArrowDbChangeEventArgs : EventArgs {
+public sealed class ArrowDbChangeEventArgs : EventArgs
+{
     /// <summary>
     /// A change event that represents an upsert
     /// </summary>
@@ -22,7 +23,8 @@ public sealed class ArrowDbChangeEventArgs : EventArgs {
     /// </summary>
     public ArrowDbChangeType ChangeType { get; init; }
 
-    private ArrowDbChangeEventArgs(ArrowDbChangeType changeType) {
+    private ArrowDbChangeEventArgs(ArrowDbChangeType changeType)
+    {
         ChangeType = changeType;
     }
 }
@@ -30,7 +32,8 @@ public sealed class ArrowDbChangeEventArgs : EventArgs {
 /// <summary>
 /// The type of change that occurred in an <see cref="ArrowDb"/> instance
 /// </summary>
-public enum ArrowDbChangeType {
+public enum ArrowDbChangeType
+{
     /// <summary>
     /// An upsert occurred
     /// </summary>

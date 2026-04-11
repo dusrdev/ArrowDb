@@ -4,9 +4,11 @@ using ArrowDbCore.Tests.Common;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Serialization {
+public class Serialization
+{
     [Fact]
-    public async Task Serialize_Resets_Changes() {
+    public async Task Serialize_Resets_Changes()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -20,7 +22,8 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task Rollback_Resets_Changes() {
+    public async Task Rollback_Resets_Changes()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -34,9 +37,11 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task Serialize_Using_Event_Resets_Changes() {
+    public async Task Serialize_Using_Event_Resets_Changes()
+    {
         var db = await ArrowDb.CreateInMemory();
-        db.OnChange += async (sender, _) => {
+        db.OnChange += async (sender, _) =>
+        {
             await ((ArrowDb)sender!).SerializeAsync();
         };
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -46,10 +51,12 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task DeferredSerializationScope_SerializeAsync_After_DisposeAsync() {
+    public async Task DeferredSerializationScope_SerializeAsync_After_DisposeAsync()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
-        await using (_ = db.BeginTransaction()) {
+        await using (_ = db.BeginTransaction())
+        {
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
@@ -61,10 +68,12 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task DeferredSerializationScope_Serialize_After_Dispose() {
+    public async Task DeferredSerializationScope_Serialize_After_Dispose()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
-        using (_ = db.BeginTransaction()) {
+        using (_ = db.BeginTransaction())
+        {
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
             Assert.Equal(1, db.Count);
@@ -75,10 +84,12 @@ public class Serialization {
         Assert.Equal(0, db.PendingChanges);
     }
 
-    private static async Task File_Serializes_And_Deserializes_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
+    private static async Task File_Serializes_And_Deserializes_As_Expected(string path, Func<ValueTask<ArrowDb>> factory)
+    {
         ArrowDb? db = null;
         ArrowDb? db2 = null;
-        try {
+        try
+        {
             db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
@@ -88,12 +99,16 @@ public class Serialization {
             FileBackedTestHelpers.ReleaseOwnership(db);
             db2 = await factory();
             Assert.Equal(db2.Source, db.Source);
-        } finally {
-            if (db2 is not null) {
+        }
+        finally
+        {
+            if (db2 is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db2);
             }
 
-            if (db is not null) {
+            if (db is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db);
             }
 
@@ -102,13 +117,15 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task FileSerializer_Serializes_And_Deserializes_As_Expected() {
+    public async Task FileSerializer_Serializes_And_Deserializes_As_Expected()
+    {
         var path = Path.GetTempFileName();
         await File_Serializes_And_Deserializes_As_Expected(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
-    public async Task AesFileSerializer_Serializes_And_Deserializes_As_Expected() {
+    public async Task AesFileSerializer_Serializes_And_Deserializes_As_Expected()
+    {
         var path = Path.GetTempFileName();
         using var aes = Aes.Create();
         aes.GenerateKey();
@@ -116,9 +133,11 @@ public class Serialization {
         await File_Serializes_And_Deserializes_As_Expected(path, () => ArrowDb.CreateFromFileWithAes(path, aes));
     }
 
-    private static async Task File_Serializes_And_Rollback_As_Expected(string path, Func<ValueTask<ArrowDb>> factory) {
+    private static async Task File_Serializes_And_Rollback_As_Expected(string path, Func<ValueTask<ArrowDb>> factory)
+    {
         ArrowDb? db = null;
-        try {
+        try
+        {
             db = await factory();
             db.Upsert("1", 1, JContext.Default.Int32);
             Assert.True(db.ContainsKey("1"));
@@ -138,8 +157,11 @@ public class Serialization {
             Assert.True(db.ContainsKey("1"));
             Assert.True(db.TryGetValue("1", JContext.Default.Int32, out var value));
             Assert.Equal(1, value);
-        } finally {
-            if (db is not null) {
+        }
+        finally
+        {
+            if (db is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db);
             }
 
@@ -148,13 +170,15 @@ public class Serialization {
     }
 
     [Fact]
-    public async Task FileSerializer_Serializes_And_Rollback_As_Expected() {
+    public async Task FileSerializer_Serializes_And_Rollback_As_Expected()
+    {
         var path = Path.GetTempFileName();
         await File_Serializes_And_Rollback_As_Expected(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
-    public async Task AesFileSerializer_Serializes_And_Rollback_As_Expected() {
+    public async Task AesFileSerializer_Serializes_And_Rollback_As_Expected()
+    {
         var path = Path.GetTempFileName();
         using var aes = Aes.Create();
         aes.GenerateKey();

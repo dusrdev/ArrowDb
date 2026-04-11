@@ -4,9 +4,11 @@ using ArrowDbCore.Tests.Common;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Cancellation {
+public class Cancellation
+{
     [Fact]
-    public async Task CreateInMemory_WhenCanceled_ThrowsOperationCanceledException() {
+    public async Task CreateInMemory_WhenCanceled_ThrowsOperationCanceledException()
+    {
         using var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
 
@@ -14,7 +16,8 @@ public class Cancellation {
     }
 
     [Fact]
-    public async Task CreateCustom_WhenCanceled_ThrowsOperationCanceledException() {
+    public async Task CreateCustom_WhenCanceled_ThrowsOperationCanceledException()
+    {
         using var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
 
@@ -22,34 +25,43 @@ public class Cancellation {
     }
 
     [Fact]
-    public async Task CreateFromFile_WhenCanceled_ThrowsOperationCanceledException() {
+    public async Task CreateFromFile_WhenCanceled_ThrowsOperationCanceledException()
+    {
         string path = Path.GetTempFileName();
         using var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
 
-        try {
+        try
+        {
             await Assert.ThrowsAsync<OperationCanceledException>(() => ArrowDb.CreateFromFile(path, cancellationTokenSource.Token).AsTask());
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task CreateFromFileWithAes_WhenCanceled_ThrowsOperationCanceledException() {
+    public async Task CreateFromFileWithAes_WhenCanceled_ThrowsOperationCanceledException()
+    {
         string path = Path.GetTempFileName();
         using var aes = System.Security.Cryptography.Aes.Create();
         using var cancellationTokenSource = new CancellationTokenSource();
         cancellationTokenSource.Cancel();
 
-        try {
+        try
+        {
             await Assert.ThrowsAsync<OperationCanceledException>(() => ArrowDb.CreateFromFileWithAes(path, aes, cancellationTokenSource.Token).AsTask());
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task SerializeAsync_WhenCanceledWhileWaitingForSemaphore_ThrowsAndDoesNotStartSecondSerialize() {
+    public async Task SerializeAsync_WhenCanceledWhileWaitingForSemaphore_ThrowsAndDoesNotStartSecondSerialize()
+    {
         var serializer = new CancellationSerializer();
         var db = await ArrowDb.CreateCustom(serializer);
         Assert.True(db.Upsert("seed", 1, JContext.Default.Int32));
@@ -70,7 +82,8 @@ public class Cancellation {
     }
 
     [Fact]
-    public async Task RollbackAsync_WhenCanceledWhileWaitingForSemaphore_ThrowsAndLeavesStateUnchanged() {
+    public async Task RollbackAsync_WhenCanceledWhileWaitingForSemaphore_ThrowsAndLeavesStateUnchanged()
+    {
         var serializer = new CancellationSerializer();
         var db = await ArrowDb.CreateCustom(serializer);
         int deserializeCallsBeforeRollback = Volatile.Read(ref serializer.DeserializeCalls);
@@ -93,7 +106,8 @@ public class Cancellation {
     }
 
     [Fact]
-    public async Task TransactionScope_WhenOuterTokenCanceled_ThrowsAndLeavesPendingChanges() {
+    public async Task TransactionScope_WhenOuterTokenCanceled_ThrowsAndLeavesPendingChanges()
+    {
         var db = await ArrowDb.CreateInMemory();
         using var cancellationTokenSource = new CancellationTokenSource();
 
@@ -110,7 +124,8 @@ public class Cancellation {
     }
 }
 
-internal sealed class CancellationSerializer : IDbSerializer {
+internal sealed class CancellationSerializer : IDbSerializer
+{
     private bool _disposed;
 
     public readonly TaskCompletionSource SerializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -120,13 +135,15 @@ internal sealed class CancellationSerializer : IDbSerializer {
 
     public bool IsDisposed => _disposed;
 
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Interlocked.Increment(ref DeserializeCalls);
         return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
     }
 
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         Interlocked.Increment(ref SerializeCalls);
         SerializeStarted.TrySetResult();
@@ -135,7 +152,8 @@ internal sealed class CancellationSerializer : IDbSerializer {
 
     public void Dispose() => _disposed = true;
 
-    public ValueTask DisposeAsync() {
+    public ValueTask DisposeAsync()
+    {
         _disposed = true;
         return ValueTask.CompletedTask;
     }

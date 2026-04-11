@@ -5,7 +5,8 @@ namespace ArrowDbCore;
 /// <summary>
 /// The interface that defines a serializer for ArrowDb
 /// </summary>
-public interface IDbSerializer : IDisposable, IAsyncDisposable {
+public interface IDbSerializer : IDisposable, IAsyncDisposable
+{
     /// <summary>
     /// Indicates whether the serializer was disposed.
     /// </summary>

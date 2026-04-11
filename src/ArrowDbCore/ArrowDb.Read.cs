@@ -3,7 +3,8 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Returns the number of entries in the database
     /// </summary>
@@ -24,8 +25,10 @@ public partial class ArrowDb {
     /// <param name="jsonTypeInfo">The json type info for the value type</param>
     /// <param name="value">The resulting value</param>
     /// <returns>True if the value exists and was parsed successfully, false otherwise</returns>
-    public bool TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTypeInfo, out TValue value) {
-        if (!Lookup.TryGetValue(key, out byte[]? existingReference)) {
+    public bool TryGetValue<TValue>(ReadOnlySpan<char> key, JsonTypeInfo<TValue> jsonTypeInfo, out TValue value)
+    {
+        if (!Lookup.TryGetValue(key, out byte[]? existingReference))
+        {
             value = default!;
             return false;
         }

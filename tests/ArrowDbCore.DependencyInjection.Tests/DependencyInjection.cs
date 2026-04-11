@@ -10,12 +10,15 @@ using Microsoft.Extensions.Hosting;
 
 namespace ArrowDbCore.DependencyInjection.Tests;
 
-public sealed class DependencyInjection {
+public sealed class DependencyInjection
+{
     [Fact]
-    public async Task InitializationHostedService_PrimesRegisteredProvider_AndReturnsSameInstance() {
+    public async Task InitializationHostedService_PrimesRegisteredProvider_AndReturnsSameInstance()
+    {
         var serializer = new TrackingSerializer();
         using IHost host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => {
+            .ConfigureServices(services =>
+            {
                 services.AddSingleton(serializer);
                 services.AddSingleton<IArrowDbProvider, ArrowDbProvider<TrackingSerializer>>();
                 services.AddArrowDbInitialization();
@@ -34,14 +37,17 @@ public sealed class DependencyInjection {
     }
 
     [Fact]
-    public async Task InitializationHostedService_WhenFileInitializationFails_HostStartupFails() {
+    public async Task InitializationHostedService_WhenFileInitializationFails_HostStartupFails()
+    {
         string path = Path.GetTempFileName();
 
-        try {
+        try
+        {
             await File.WriteAllTextAsync(path, "not json", TestContext.Current.CancellationToken);
 
             using IHost host = Host.CreateDefaultBuilder()
-                .ConfigureServices(services => {
+                .ConfigureServices(services =>
+                {
                     services.AddSingleton(new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray));
                     services.AddSingleton<IArrowDbProvider, ArrowDbProvider<FileSerializer>>();
                     services.AddArrowDbInitialization();
@@ -49,15 +55,19 @@ public sealed class DependencyInjection {
                 .Build();
 
             await Assert.ThrowsAsync<System.Text.Json.JsonException>(() => host.StartAsync(TestContext.Current.CancellationToken));
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task GenericProvider_WithInMemorySerializer_InitializesAndSupportsReads() {
+    public async Task GenericProvider_WithInMemorySerializer_InitializesAndSupportsReads()
+    {
         using IHost host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => {
+            .ConfigureServices(services =>
+            {
                 services.AddSingleton(new InMemorySerializer());
                 services.AddSingleton<IArrowDbProvider, ArrowDbProvider<InMemorySerializer>>();
                 services.AddArrowDbInitialization();
@@ -74,12 +84,15 @@ public sealed class DependencyInjection {
     }
 
     [Fact]
-    public async Task GenericProvider_WithAesFileSerializer_InitializesSuccessfully() {
+    public async Task GenericProvider_WithAesFileSerializer_InitializesSuccessfully()
+    {
         string path = Path.GetTempFileName();
 
-        try {
+        try
+        {
             using IHost host = Host.CreateDefaultBuilder()
-                .ConfigureServices(services => {
+                .ConfigureServices(services =>
+                {
                     services.AddSingleton(_ => Aes.Create());
                     services.AddSingleton(serviceProvider =>
                         new AesFileSerializer(
@@ -96,20 +109,25 @@ public sealed class DependencyInjection {
             IArrowDbProvider provider = host.Services.GetRequiredService<IArrowDbProvider>();
             ArrowDb db = await provider.GetAsync(TestContext.Current.CancellationToken);
             Assert.True(db.Upsert("seed", 1, JContext.Default.Int32));
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task HostShutdown_DisposesOwnedSerializer_AndRetainedArrowDbBlocksPersistence() {
+    public async Task HostShutdown_DisposesOwnedSerializer_AndRetainedArrowDbBlocksPersistence()
+    {
         string path = Path.GetTempFileName();
         ArrowDb? db = null;
         FileSerializer? serializer = null;
 
-        try {
+        try
+        {
             IHost host = Host.CreateDefaultBuilder()
-                .ConfigureServices(services => {
+                .ConfigureServices(services =>
+                {
                     serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
                     services.AddSingleton<IArrowDbProvider>(_ => new ArrowDbProvider<FileSerializer>(serializer, disposeSerializer: true));
                     services.AddArrowDbInitialization();
@@ -130,16 +148,20 @@ public sealed class DependencyInjection {
 
             using FileStream lockStream = new($"{path}.lock", FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None);
             Assert.NotNull(lockStream);
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task GenericProvider_IsLazyWithoutInitializationHostedService() {
+    public async Task GenericProvider_IsLazyWithoutInitializationHostedService()
+    {
         var serializer = new TrackingSerializer();
         using IHost host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => {
+            .ConfigureServices(services =>
+            {
                 services.AddSingleton(serializer);
                 services.AddSingleton<IArrowDbProvider, ArrowDbProvider<TrackingSerializer>>();
             })
@@ -155,10 +177,12 @@ public sealed class DependencyInjection {
     }
 
     [Fact]
-    public async Task ProviderOwnedSerializer_IsDisposedWhenHostStops() {
+    public async Task ProviderOwnedSerializer_IsDisposedWhenHostStops()
+    {
         var serializer = new TrackingSerializer();
         IHost host = Host.CreateDefaultBuilder()
-            .ConfigureServices(services => {
+            .ConfigureServices(services =>
+            {
                 services.AddSingleton<IArrowDbProvider>(_ => new ArrowDbProvider<TrackingSerializer>(serializer, disposeSerializer: true));
                 services.AddArrowDbInitialization();
             })
@@ -172,7 +196,8 @@ public sealed class DependencyInjection {
     }
 
     [Fact]
-    public async Task Provider_DoesNotDisposeExternalSerializerByDefault() {
+    public async Task Provider_DoesNotDisposeExternalSerializerByDefault()
+    {
         var serializer = new TrackingSerializer();
         var provider = new ArrowDbProvider<TrackingSerializer>(serializer);
 
@@ -185,12 +210,15 @@ public sealed class DependencyInjection {
         Assert.False(serializer.IsDisposed);
     }
 
-    private sealed class TrackingSerializer : IDbSerializer {
+    private sealed class TrackingSerializer : IDbSerializer
+    {
         public int DeserializeCalls;
         public bool IsDisposed { get; private set; }
 
-        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
-            if (IsDisposed) {
+        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+        {
+            if (IsDisposed)
+            {
                 throw new ObjectDisposedException(GetType().FullName);
             }
 
@@ -198,8 +226,10 @@ public sealed class DependencyInjection {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
 
-        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
-            if (IsDisposed) {
+        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+        {
+            if (IsDisposed)
+            {
                 throw new ObjectDisposedException(GetType().FullName);
             }
 
@@ -208,7 +238,8 @@ public sealed class DependencyInjection {
 
         public void Dispose() => IsDisposed = true;
 
-        public ValueTask DisposeAsync() {
+        public ValueTask DisposeAsync()
+        {
             IsDisposed = true;
             return ValueTask.CompletedTask;
         }

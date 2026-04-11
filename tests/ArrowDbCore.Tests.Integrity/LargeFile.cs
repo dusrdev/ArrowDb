@@ -8,8 +8,10 @@ using Person = ArrowDbCore.Tests.Common.Person;
 
 namespace ArrowDbCore.Tests.Integrity;
 
-public class LargeFile {
-    private static async Task LargeFile_Passes_OneReadWriteCycle(string path, Func<ValueTask<ArrowDb>> factory) {
+public class LargeFile
+{
+    private static async Task LargeFile_Passes_OneReadWriteCycle(string path, Func<ValueTask<ArrowDb>> factory)
+    {
         const int itemCount = 500_000;
         ArrowDb? db = null;
         ArrowDb? db2 = null;
@@ -22,13 +24,15 @@ public class LargeFile {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-        try {
+        try
+        {
             // load the db
             db = await factory();
             // clear
             Assert.True(db.TryClear());
             // add items
-            for (var j = 0; j < itemCount; j++) {
+            for (var j = 0; j < itemCount; j++)
+            {
                 var person = faker.Generate();
                 var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
                 db.Upsert(key, person, JContext.Default.Person);
@@ -40,12 +44,16 @@ public class LargeFile {
             // try to load again
             db2 = await factory();
             Assert.Equal(actualCount, db2.Count);
-        } finally {
-            if (db2 is not null) {
+        }
+        finally
+        {
+            if (db2 is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db2);
             }
 
-            if (db is not null) {
+            if (db is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db);
             }
 
@@ -56,13 +64,15 @@ public class LargeFile {
     }
 
     [Fact]
-    public async Task LargeFile_Passes_OneReadWriteCycle_FileSerializer() {
+    public async Task LargeFile_Passes_OneReadWriteCycle_FileSerializer()
+    {
         var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-file-serializer.db");
         await LargeFile_Passes_OneReadWriteCycle(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
-    public async Task LargeFile_Passes_OneReadWriteCycle_AesFileSerializer() {
+    public async Task LargeFile_Passes_OneReadWriteCycle_AesFileSerializer()
+    {
         var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-aes-file-serializer.db");
         using var aes = Aes.Create();
         aes.GenerateKey();

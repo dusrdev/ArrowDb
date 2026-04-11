@@ -4,15 +4,19 @@ using System.Text.Json.Serialization;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class RollbackRace {
+public class RollbackRace
+{
     [Fact]
-    public async Task Upsert_WhenRacingWithRollback_EitherPersistsOrSignalsFailure() {
+    public async Task Upsert_WhenRacingWithRollback_EitherPersistsOrSignalsFailure()
+    {
         var serializer = new RollbackRaceBlockingSerializer();
         var db = await ArrowDb.CreateCustom(serializer);
 
         var upsertCommitted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
-        db.OnChange += (_, args) => {
-            if (args.ChangeType == ArrowDbChangeType.Upsert) {
+        db.OnChange += (_, args) =>
+        {
+            if (args.ChangeType == ArrowDbChangeType.Upsert)
+            {
                 upsertCommitted.TrySetResult();
             }
         };
@@ -20,7 +24,8 @@ public class RollbackRace {
         var hooks = new RollbackRaceHooks();
         RollbackRaceValueConverter.Hooks.Value = hooks;
 
-        try {
+        try
+        {
             Task<bool> upsertTask = Task.Run(() => db.Upsert(
                 "k",
                 new RollbackRaceValue { X = 1 },
@@ -49,13 +54,16 @@ public class RollbackRace {
             // If the write is not reliable due to concurrent rollback, the operation should report failure.
             // Today, this can be violated (Upsert returns true but the key is dropped by rollback).
             Assert.True(db.ContainsKey("k") || !upserted);
-        } finally {
+        }
+        finally
+        {
             RollbackRaceValueConverter.Hooks.Value = null;
         }
     }
 }
 
-internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
+internal sealed class RollbackRaceBlockingSerializer : IDbSerializer
+{
     private int _blockNextDeserialize;
     private bool _disposed;
 
@@ -66,9 +74,11 @@ internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
 
     public void BlockNextDeserialize() => Interlocked.Exchange(ref _blockNextDeserialize, 1);
 
-    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+    public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
-        if (Interlocked.Exchange(ref _blockNextDeserialize, 0) == 0) {
+        if (Interlocked.Exchange(ref _blockNextDeserialize, 0) == 0)
+        {
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
 
@@ -76,67 +86,85 @@ internal sealed class RollbackRaceBlockingSerializer : IDbSerializer {
         return new ValueTask<ConcurrentDictionary<string, byte[]>>(WaitAndReturnEmptyAsync());
     }
 
-    private async Task<ConcurrentDictionary<string, byte[]>> WaitAndReturnEmptyAsync() {
+    private async Task<ConcurrentDictionary<string, byte[]>> WaitAndReturnEmptyAsync()
+    {
         await AllowRollbackDeserializeToReturn.Task.ConfigureAwait(false);
         return new ConcurrentDictionary<string, byte[]>();
     }
 
-    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+    public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return ValueTask.CompletedTask;
     }
 
     public void Dispose() => _disposed = true;
 
-    public ValueTask DisposeAsync() {
+    public ValueTask DisposeAsync()
+    {
         _disposed = true;
         return ValueTask.CompletedTask;
     }
 }
 
-internal sealed class RollbackRaceHooks {
+internal sealed class RollbackRaceHooks
+{
     public readonly TaskCompletionSource UpsertReachedValueSerialization = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public readonly ManualResetEventSlim AllowUpsertToProceed = new(false);
 }
 
 [JsonConverter(typeof(RollbackRaceValueConverter))]
-internal sealed class RollbackRaceValue {
+internal sealed class RollbackRaceValue
+{
     public int X { get; set; }
 }
 
-internal sealed class RollbackRaceValueConverter : JsonConverter<RollbackRaceValue> {
+internal sealed class RollbackRaceValueConverter : JsonConverter<RollbackRaceValue>
+{
     public static readonly AsyncLocal<RollbackRaceHooks?> Hooks = new();
 
-    public override RollbackRaceValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        if (reader.TokenType != JsonTokenType.StartObject) {
+    public override RollbackRaceValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.StartObject)
+        {
             throw new JsonException("Expected StartObject.");
         }
         int x = 0;
-        while (reader.Read()) {
-            if (reader.TokenType == JsonTokenType.EndObject) {
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+            {
                 return new RollbackRaceValue { X = x };
             }
-            if (reader.TokenType != JsonTokenType.PropertyName) {
+            if (reader.TokenType != JsonTokenType.PropertyName)
+            {
                 throw new JsonException("Expected PropertyName.");
             }
             string propertyName = reader.GetString() ?? string.Empty;
-            if (!reader.Read()) {
+            if (!reader.Read())
+            {
                 throw new JsonException("Unexpected end of JSON.");
             }
-            if (propertyName == "x") {
+            if (propertyName == "x")
+            {
                 x = reader.GetInt32();
-            } else {
+            }
+            else
+            {
                 reader.Skip();
             }
         }
         throw new JsonException("Unexpected end of JSON.");
     }
 
-    public override void Write(Utf8JsonWriter writer, RollbackRaceValue value, JsonSerializerOptions options) {
+    public override void Write(Utf8JsonWriter writer, RollbackRaceValue value, JsonSerializerOptions options)
+    {
         RollbackRaceHooks? hooks = Hooks.Value;
-        if (hooks is not null) {
+        if (hooks is not null)
+        {
             hooks.UpsertReachedValueSerialization.TrySetResult();
-            if (!hooks.AllowUpsertToProceed.Wait(TimeSpan.FromSeconds(5))) {
+            if (!hooks.AllowUpsertToProceed.Wait(TimeSpan.FromSeconds(5)))
+            {
                 throw new TimeoutException("Timed out waiting for test to allow value serialization to proceed.");
             }
         }

@@ -4,9 +4,11 @@ using ArrowDbCore.Tests.Common;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Reads {
+public class Reads
+{
     [Fact]
-    public async Task TryGetValue_CurrentType() {
+    public async Task TryGetValue_CurrentType()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -16,9 +18,11 @@ public class Reads {
     }
 
     [Fact]
-    public async Task TryGetValue_WrongType_ThrowsJsonException() {
+    public async Task TryGetValue_WrongType_ThrowsJsonException()
+    {
         var db = await ArrowDb.CreateInMemory();
-        Person ron = new() {
+        Person ron = new()
+        {
             Name = "Ron",
             Age = 50,
             BirthDate = TimeProvider.System.GetUtcNow().AddYears(-50).DateTime,
@@ -33,7 +37,8 @@ public class Reads {
     }
 
     [Fact]
-    public async Task TryGetValue_Struct_ReturnsTrueForDefault() {
+    public async Task TryGetValue_Struct_ReturnsTrueForDefault()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("int", 0, JContext.Default.Int32);

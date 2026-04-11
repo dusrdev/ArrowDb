@@ -3,7 +3,8 @@ namespace ArrowDbCore.DependencyInjection;
 /// <summary>
 /// Provides asynchronous access to a DI-managed <see cref="ArrowDb"/> instance.
 /// </summary>
-public interface IArrowDbProvider {
+public interface IArrowDbProvider
+{
     /// <summary>
     /// Gets the initialized <see cref="ArrowDb"/> instance.
     /// </summary>

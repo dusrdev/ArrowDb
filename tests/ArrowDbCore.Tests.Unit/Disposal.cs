@@ -7,9 +7,11 @@ using ArrowDbCore.Tests.Common;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public sealed class Disposal {
+public sealed class Disposal
+{
     [Fact]
-    public async Task InMemorySerializer_WhenDisposed_ReportsDisposedAndThrowsFromAsyncMethods() {
+    public async Task InMemorySerializer_WhenDisposed_ReportsDisposedAndThrowsFromAsyncMethods()
+    {
         var serializer = new InMemorySerializer();
 
         await serializer.DisposeAsync();
@@ -20,11 +22,13 @@ public sealed class Disposal {
     }
 
     [Fact]
-    public async Task FileSerializer_WhenDisposed_ReportsDisposedAndThrowsFromAsyncMethods() {
+    public async Task FileSerializer_WhenDisposed_ReportsDisposedAndThrowsFromAsyncMethods()
+    {
         string path = Path.GetTempFileName();
         FileSerializer? serializer = null;
 
-        try {
+        try
+        {
             serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
 
             await serializer.DisposeAsync();
@@ -32,31 +36,38 @@ public sealed class Disposal {
             Assert.True(serializer.IsDisposed);
             await Assert.ThrowsAsync<ObjectDisposedException>(() => serializer.DeserializeAsync().AsTask());
             await Assert.ThrowsAsync<ObjectDisposedException>(() => serializer.SerializeAsync(new ConcurrentDictionary<string, byte[]>()).AsTask());
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public void AesFileSerializer_Dispose_DoesNotDisposeSuppliedAes() {
+    public void AesFileSerializer_Dispose_DoesNotDisposeSuppliedAes()
+    {
         string path = Path.GetTempFileName();
         using Aes aes = Aes.Create();
         AesFileSerializer? serializer = null;
 
-        try {
+        try
+        {
             serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
 
             serializer.Dispose();
 
             using ICryptoTransform encryptor = aes.CreateEncryptor();
             Assert.NotNull(encryptor);
-        } finally {
+        }
+        finally
+        {
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task ArrowDb_WhenSerializerDisposed_PersistenceApisThrowAndInMemoryOperationsStillWork() {
+    public async Task ArrowDb_WhenSerializerDisposed_PersistenceApisThrowAndInMemoryOperationsStillWork()
+    {
         ArrowDb db = await ArrowDb.CreateInMemory();
         Assert.True(db.Upsert("seed", 1, JContext.Default.Int32));
 
@@ -74,7 +85,8 @@ public sealed class Disposal {
     }
 
     [Fact]
-    public async Task CreateCustom_WhenDeserializeFails_DisposesSerializer() {
+    public async Task CreateCustom_WhenDeserializeFails_DisposesSerializer()
+    {
         var serializer = new FailingSerializer();
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => ArrowDb.CreateCustom(serializer).AsTask());
@@ -83,32 +95,40 @@ public sealed class Disposal {
     }
 
     [Fact]
-    public async Task CreateFromFile_WhenDeserializeFails_DisposesSerializerAndReleasesOwnership() {
+    public async Task CreateFromFile_WhenDeserializeFails_DisposesSerializerAndReleasesOwnership()
+    {
         string path = Path.GetTempFileName();
         FileSerializer? serializer = null;
 
-        try {
+        try
+        {
             await File.WriteAllTextAsync(path, "not json", TestContext.Current.CancellationToken);
 
             await Assert.ThrowsAsync<JsonException>(() => ArrowDb.CreateFromFile(path).AsTask());
 
             serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
             Assert.False(serializer.IsDisposed);
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
-    private sealed class FailingSerializer : IDbSerializer {
+    private sealed class FailingSerializer : IDbSerializer
+    {
         public bool IsDisposed { get; private set; }
 
-        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+        {
             throw new InvalidOperationException("boom");
         }
 
-        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
-            if (IsDisposed) {
+        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+        {
+            if (IsDisposed)
+            {
                 throw new ObjectDisposedException(GetType().FullName);
             }
 
@@ -117,7 +137,8 @@ public sealed class Disposal {
 
         public void Dispose() => IsDisposed = true;
 
-        public ValueTask DisposeAsync() {
+        public ValueTask DisposeAsync()
+        {
             IsDisposed = true;
             return ValueTask.CompletedTask;
         }

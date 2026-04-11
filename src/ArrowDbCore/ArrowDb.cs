@@ -6,7 +6,8 @@ namespace ArrowDbCore;
 /// ArrowDb
 /// </summary>
 /// <remarks>Initialize via the factory methods</remarks>
-public sealed partial class ArrowDb {
+public sealed partial class ArrowDb
+{
     /// <summary>
     /// Returns the number of active <see cref="ArrowDb"/> instances
     /// </summary>
@@ -50,7 +51,8 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Raises the <see cref="OnChange"/> event
     /// </summary>
-    private void OnChangeInternal(ArrowDbChangeEventArgs args) {
+    private void OnChangeInternal(ArrowDbChangeEventArgs args)
+    {
         Interlocked.Increment(ref _pendingChanges);
         OnChange?.Invoke(this, args);
     }
@@ -81,7 +83,8 @@ public sealed partial class ArrowDb {
     /// <param name="source">A pre-existing or empty dictionary</param>
     /// <param name="serializer">A serializer implementation</param>
     /// <param name="disposeSerializer">Whether this instance owns the serializer lifetime.</param>
-    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer, bool disposeSerializer) {
+    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer, bool disposeSerializer)
+    {
         Source = source;
         Lookup = Source.GetAlternateLookup<ReadOnlySpan<char>>();
         Serializer = serializer;
@@ -93,7 +96,8 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Finalizer (called when the instance is garbage collected)
     /// </summary>
-    ~ArrowDb() {
+    ~ArrowDb()
+    {
         if (DisposeSerializer)
             Serializer.Dispose();
 
@@ -110,7 +114,8 @@ public sealed partial class ArrowDb {
     /// </remarks>
     /// <param name="cancellationToken">A cancellation token for the outermost implicit serialize operation.</param>
     /// <returns>A new <see cref="ArrowDbTransactionScope"/> instance.</returns>
-    public ArrowDbTransactionScope BeginTransaction(CancellationToken cancellationToken = default) {
+    public ArrowDbTransactionScope BeginTransaction(CancellationToken cancellationToken = default)
+    {
         ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
         return new(this, cancellationToken);
     }

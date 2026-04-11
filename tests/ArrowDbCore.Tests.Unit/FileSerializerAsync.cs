@@ -5,16 +5,20 @@ using ArrowDbCore.Serializers;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public sealed class FileSerializerAsync {
+public sealed class FileSerializerAsync
+{
     [Fact]
-    public async Task BaseFileSerializer_SerializeAsync_WhenCanceledBeforeCommit_LeavesOriginalFileAndDeletesTemp() {
+    public async Task BaseFileSerializer_SerializeAsync_WhenCanceledBeforeCommit_LeavesOriginalFileAndDeletesTemp()
+    {
         string path = Path.GetTempFileName();
         AsyncTrackingFileSerializer? serializer = null;
 
-        try {
+        try
+        {
             await File.WriteAllTextAsync(path, "original", TestContext.Current.CancellationToken);
 
-            serializer = new AsyncTrackingFileSerializer(path) {
+            serializer = new AsyncTrackingFileSerializer(path)
+            {
                 BlockSerialize = true,
             };
 
@@ -30,21 +34,26 @@ public sealed class FileSerializerAsync {
             Assert.Equal("original", await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
             Assert.NotNull(tempFilePath);
             Assert.False(File.Exists(tempFilePath));
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task BaseFileSerializer_DeserializeAsync_WhenCanceled_ThrowsAndLeavesFileUnchanged() {
+    public async Task BaseFileSerializer_DeserializeAsync_WhenCanceled_ThrowsAndLeavesFileUnchanged()
+    {
         string path = Path.GetTempFileName();
         AsyncTrackingFileSerializer? serializer = null;
 
-        try {
+        try
+        {
             await File.WriteAllTextAsync(path, "existing", TestContext.Current.CancellationToken);
 
-            serializer = new AsyncTrackingFileSerializer(path) {
+            serializer = new AsyncTrackingFileSerializer(path)
+            {
                 BlockDeserialize = true,
             };
 
@@ -56,18 +65,22 @@ public sealed class FileSerializerAsync {
 
             await Assert.ThrowsAnyAsync<OperationCanceledException>(() => deserializeTask);
             Assert.Equal("existing", await File.ReadAllTextAsync(path, TestContext.Current.CancellationToken));
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
     [Fact]
-    public async Task BaseFileSerializer_SerializeAsync_UsesUniqueTempFilePerWrite() {
+    public async Task BaseFileSerializer_SerializeAsync_UsesUniqueTempFilePerWrite()
+    {
         string path = Path.GetTempFileName();
         AsyncTrackingFileSerializer? serializer = null;
 
-        try {
+        try
+        {
             serializer = new AsyncTrackingFileSerializer(path);
 
             await serializer.SerializeAsync(new ConcurrentDictionary<string, byte[]>());
@@ -75,18 +88,22 @@ public sealed class FileSerializerAsync {
 
             Assert.Equal(2, serializer.SerializeStreamPaths.Count);
             Assert.NotEqual(serializer.SerializeStreamPaths[0], serializer.SerializeStreamPaths[1]);
-            Assert.All(serializer.SerializeStreamPaths, tempFilePath => {
+            Assert.All(serializer.SerializeStreamPaths, tempFilePath =>
+            {
                 Assert.StartsWith($"{path}.", tempFilePath, StringComparison.Ordinal);
                 Assert.EndsWith(".tmp", tempFilePath, StringComparison.Ordinal);
                 Assert.NotEqual(path, tempFilePath);
             });
-        } finally {
+        }
+        finally
+        {
             serializer?.Dispose();
             FileBackedTestHelpers.DeleteArtifacts(path);
         }
     }
 
-    private sealed class AsyncTrackingFileSerializer : BaseFileSerializer {
+    private sealed class AsyncTrackingFileSerializer : BaseFileSerializer
+    {
         public readonly TaskCompletionSource SerializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public readonly TaskCompletionSource DeserializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
         public readonly List<string> SerializeStreamPaths = [];
@@ -94,16 +111,20 @@ public sealed class FileSerializerAsync {
         public bool BlockDeserialize;
 
         public AsyncTrackingFileSerializer(string path)
-            : base(path) {
+            : base(path)
+        {
         }
 
-        protected override async ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken) {
-            if (stream is FileStream fileStream) {
+        protected override async ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken)
+        {
+            if (stream is FileStream fileStream)
+            {
                 SerializeStreamPaths.Add(fileStream.Name);
             }
 
             SerializeStarted.TrySetResult();
-            if (BlockSerialize) {
+            if (BlockSerialize)
+            {
                 await Task.Delay(Timeout.Infinite, cancellationToken);
             }
 
@@ -111,9 +132,11 @@ public sealed class FileSerializerAsync {
             await stream.WriteAsync(bytes, cancellationToken);
         }
 
-        protected override async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken) {
+        protected override async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken)
+        {
             DeserializeStarted.TrySetResult();
-            if (BlockDeserialize) {
+            if (BlockDeserialize)
+            {
                 await Task.Delay(Timeout.Infinite, cancellationToken);
             }
 

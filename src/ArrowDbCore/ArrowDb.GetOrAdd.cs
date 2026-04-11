@@ -3,7 +3,8 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Tries to retrieve a value stored in the database under <paramref name="key"/>, if it doesn't exist, it uses the factory to create and add it, then returns it.
     /// </summary>
@@ -23,8 +24,10 @@ public partial class ArrowDb {
     /// If you need single-invocation semantics for <paramref name="valueFactory"/> (e.g. the factory has side-effects or is expensive), guard the call site with a keyed lock.
     /// </para>
     /// </remarks>
-    public async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default) {
-        if (Lookup.TryGetValue(key, out var source)) {
+    public async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default)
+    {
+        if (Lookup.TryGetValue(key, out var source))
+        {
             return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
         }
 
@@ -56,8 +59,10 @@ public partial class ArrowDb {
     /// If you need single-invocation semantics for <paramref name="valueFactory"/> (e.g. the factory has side-effects or is expensive), guard the call site with a keyed lock.
     /// </para>
     /// </remarks>
-    public async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, CancellationToken, ValueTask<TValue>> valueFactory, TArg factoryArgument, CancellationToken cancellationToken = default) {
-        if (Lookup.TryGetValue(key, out var source)) {
+    public async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, CancellationToken, ValueTask<TValue>> valueFactory, TArg factoryArgument, CancellationToken cancellationToken = default)
+    {
+        if (Lookup.TryGetValue(key, out var source))
+        {
             return JsonSerializer.Deserialize(new ReadOnlySpan<byte>(source), jsonTypeInfo)!;
         }
 

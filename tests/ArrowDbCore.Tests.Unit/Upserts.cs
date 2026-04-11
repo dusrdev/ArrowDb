@@ -2,9 +2,11 @@
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Upserts {
+public class Upserts
+{
     [Fact]
-    public async Task Upsert_When_Not_Found_Inserts() {
+    public async Task Upsert_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -13,7 +15,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Upsert_When_Found_Overwrites() {
+    public async Task Upsert_When_Found_Overwrites()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -25,7 +28,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Upsert_NullValue_IsDisallowed() {
+    public async Task Upsert_NullValue_IsDisallowed()
+    {
         // Arrange
         var db = await ArrowDb.CreateInMemory();
 
@@ -39,14 +43,16 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Not_Found_Inserts() {
+    public async Task Conditional_Update_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         Assert.True(db.Upsert("1", 1, JContext.Default.Int32, reference => reference == 3));
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_And_Valid_Updates() {
+    public async Task Conditional_Update_When_Found_And_Valid_Updates()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -56,7 +62,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_And_Invalid_Returns_False() {
+    public async Task Conditional_Update_When_Found_And_Invalid_Returns_False()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -66,7 +73,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_Default_ForValueType_StillEvaluatesCondition() {
+    public async Task Conditional_Update_When_Found_Default_ForValueType_StillEvaluatesCondition()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 0, JContext.Default.Int32);
@@ -76,7 +84,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Not_Found_Inserts() {
+    public async Task Conditional_Update_TArg_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         // using a static delegate ensures that closure cannot be allocated
@@ -84,7 +93,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Found_And_Valid_Updates() {
+    public async Task Conditional_Update_TArg_When_Found_And_Valid_Updates()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -95,7 +105,8 @@ public class Upserts {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Found_And_Invalid_Returns_False() {
+    public async Task Conditional_Update_TArg_When_Found_And_Invalid_Returns_False()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);

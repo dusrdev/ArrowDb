@@ -4,17 +4,22 @@ using System.Text.Json.Serialization;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class SerializationPendingChanges {
+public class SerializationPendingChanges
+{
     [Fact]
-    public async Task SerializeAsync_WhenChangeHappensDuringSerialization_DoesNotClearPendingChanges() {
+    public async Task SerializeAsync_WhenChangeHappensDuringSerialization_DoesNotClearPendingChanges()
+    {
         var serializer = new BlockingSerializer();
         var db = await ArrowDb.CreateCustom(serializer);
 
         var secondUpsertCommitted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         int upsertEvents = 0;
-        db.OnChange += (_, args) => {
-            if (args.ChangeType == ArrowDbChangeType.Upsert) {
-                if (Interlocked.Increment(ref upsertEvents) == 2) {
+        db.OnChange += (_, args) =>
+        {
+            if (args.ChangeType == ArrowDbChangeType.Upsert)
+            {
+                if (Interlocked.Increment(ref upsertEvents) == 2)
+                {
                     secondUpsertCommitted.TrySetResult();
                 }
             }
@@ -26,7 +31,8 @@ public class SerializationPendingChanges {
         var hooks = new PendingChangesDuringSerializeHooks();
         PendingChangesDuringSerializeValueConverter.Hooks.Value = hooks;
 
-        try {
+        try
+        {
             Task<bool> upsertTask = Task.Run(() => db.Upsert("k", new PendingChangesDuringSerializeValue { X = 1 }, PendingChangesDuringSerializeJsonContext.Default.PendingChangesDuringSerializeValue));
 
             await hooks.UpsertReachedValueSerialization.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
@@ -44,12 +50,15 @@ public class SerializationPendingChanges {
 
             Assert.True(upserted);
             Assert.True(db.PendingChanges > 0);
-        } finally {
+        }
+        finally
+        {
             PendingChangesDuringSerializeValueConverter.Hooks.Value = null;
         }
     }
 
-    private sealed class BlockingSerializer : IDbSerializer {
+    private sealed class BlockingSerializer : IDbSerializer
+    {
         private bool _disposed;
 
         public readonly TaskCompletionSource SerializeStarted = new(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -57,12 +66,14 @@ public class SerializationPendingChanges {
 
         public bool IsDisposed => _disposed;
 
-        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default) {
+        public ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default)
+        {
             ObjectDisposedException.ThrowIf(_disposed, this);
             return ValueTask.FromResult(new ConcurrentDictionary<string, byte[]>());
         }
 
-        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default) {
+        public ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default)
+        {
             ObjectDisposedException.ThrowIf(_disposed, this);
             SerializeStarted.TrySetResult();
             return new ValueTask(AllowSerializeToFinish.Task);
@@ -70,7 +81,8 @@ public class SerializationPendingChanges {
 
         public void Dispose() => _disposed = true;
 
-        public ValueTask DisposeAsync() {
+        public ValueTask DisposeAsync()
+        {
             _disposed = true;
             return ValueTask.CompletedTask;
         }
@@ -80,49 +92,64 @@ public class SerializationPendingChanges {
 
 // These types are intentionally top-level so System.Text.Json source generation runs correctly.
 
-internal sealed class PendingChangesDuringSerializeHooks {
+internal sealed class PendingChangesDuringSerializeHooks
+{
     public readonly TaskCompletionSource UpsertReachedValueSerialization = new(TaskCreationOptions.RunContinuationsAsynchronously);
     public readonly ManualResetEventSlim AllowUpsertToProceed = new(false);
 }
 
 [JsonConverter(typeof(PendingChangesDuringSerializeValueConverter))]
-internal sealed class PendingChangesDuringSerializeValue {
+internal sealed class PendingChangesDuringSerializeValue
+{
     public int X { get; set; }
 }
 
-internal sealed class PendingChangesDuringSerializeValueConverter : JsonConverter<PendingChangesDuringSerializeValue> {
+internal sealed class PendingChangesDuringSerializeValueConverter : JsonConverter<PendingChangesDuringSerializeValue>
+{
     public static readonly AsyncLocal<PendingChangesDuringSerializeHooks?> Hooks = new();
 
-    public override PendingChangesDuringSerializeValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options) {
-        if (reader.TokenType != JsonTokenType.StartObject) {
+    public override PendingChangesDuringSerializeValue Read(ref Utf8JsonReader reader, Type typeToConvert, JsonSerializerOptions options)
+    {
+        if (reader.TokenType != JsonTokenType.StartObject)
+        {
             throw new JsonException("Expected StartObject.");
         }
         int x = 0;
-        while (reader.Read()) {
-            if (reader.TokenType == JsonTokenType.EndObject) {
+        while (reader.Read())
+        {
+            if (reader.TokenType == JsonTokenType.EndObject)
+            {
                 return new PendingChangesDuringSerializeValue { X = x };
             }
-            if (reader.TokenType != JsonTokenType.PropertyName) {
+            if (reader.TokenType != JsonTokenType.PropertyName)
+            {
                 throw new JsonException("Expected PropertyName.");
             }
             string propertyName = reader.GetString() ?? string.Empty;
-            if (!reader.Read()) {
+            if (!reader.Read())
+            {
                 throw new JsonException("Unexpected end of JSON.");
             }
-            if (propertyName == "x") {
+            if (propertyName == "x")
+            {
                 x = reader.GetInt32();
-            } else {
+            }
+            else
+            {
                 reader.Skip();
             }
         }
         throw new JsonException("Unexpected end of JSON.");
     }
 
-    public override void Write(Utf8JsonWriter writer, PendingChangesDuringSerializeValue value, JsonSerializerOptions options) {
+    public override void Write(Utf8JsonWriter writer, PendingChangesDuringSerializeValue value, JsonSerializerOptions options)
+    {
         PendingChangesDuringSerializeHooks? hooks = Hooks.Value;
-        if (hooks is not null) {
+        if (hooks is not null)
+        {
             hooks.UpsertReachedValueSerialization.TrySetResult();
-            if (!hooks.AllowUpsertToProceed.Wait(TimeSpan.FromSeconds(5))) {
+            if (!hooks.AllowUpsertToProceed.Wait(TimeSpan.FromSeconds(5)))
+            {
                 throw new TimeoutException("Timed out waiting for test to allow value serialization to proceed.");
             }
         }

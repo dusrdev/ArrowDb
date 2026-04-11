@@ -8,8 +8,10 @@ using Person = ArrowDbCore.Tests.Common.Person;
 
 namespace ArrowDbCore.Tests.Integrity;
 
-public class ReadWriteCycles {
-    private static async Task FileIO_Passes_ReadWriteCycles(string path, Func<ValueTask<ArrowDb>> factory) {
+public class ReadWriteCycles
+{
+    private static async Task FileIO_Passes_ReadWriteCycles(string path, Func<ValueTask<ArrowDb>> factory)
+    {
         const int iterations = 200;
         const int itemCount = 100;
         ArrowDb? db = null;
@@ -22,14 +24,17 @@ public class ReadWriteCycles {
         faker.RuleFor(p => p.IsMarried, (f, _) => f.Random.Bool());
 
         var buffer = new char[256];
-        try {
-            for (var i = 0; i < iterations; i++) {
+        try
+        {
+            for (var i = 0; i < iterations; i++)
+            {
                 // load the db
                 db = await factory();
                 // clear
                 Assert.True(db.TryClear());
                 // add items
-                for (var j = 0; j < itemCount; j++) {
+                for (var j = 0; j < itemCount; j++)
+                {
                     var person = faker.Generate();
                     var key = ArrowDb.GenerateTypedKey<Person>(person.Name, buffer);
                     db.Upsert(key, person, JContext.Default.Person);
@@ -39,8 +44,11 @@ public class ReadWriteCycles {
                 FileBackedTestHelpers.ReleaseOwnership(db);
                 db = null;
             }
-        } finally {
-            if (db is not null) {
+        }
+        finally
+        {
+            if (db is not null)
+            {
                 FileBackedTestHelpers.ReleaseOwnership(db);
             }
 
@@ -51,13 +59,15 @@ public class ReadWriteCycles {
     }
 
     [Fact]
-    public async Task FileIO_Passes_ReadWriteCycles_FileSerializer() {
+    public async Task FileIO_Passes_ReadWriteCycles_FileSerializer()
+    {
         var path = Sharpify.Utils.Env.PathInBaseDirectory("rdc-test-file-serializer.db");
         await FileIO_Passes_ReadWriteCycles(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
-    public async Task FileIO_Passes_ReadWriteCycles_AesFileSerializer() {
+    public async Task FileIO_Passes_ReadWriteCycles_AesFileSerializer()
+    {
         var path = Sharpify.Utils.Env.PathInBaseDirectory("rdc-test-aes-file-serializer.db");
         using var aes = Aes.Create();
         aes.GenerateKey();

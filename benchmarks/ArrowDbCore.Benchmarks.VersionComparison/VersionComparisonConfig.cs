@@ -13,10 +13,12 @@ using NuGet.Versioning;
 
 namespace ArrowDbCore.Benchmarks.VersionComparison;
 
-public class VersionComparisonConfig : ManualConfig {
+public class VersionComparisonConfig : ManualConfig
+{
     public const string PackageId = "ArrowDb";
 
-    public VersionComparisonConfig() {
+    public VersionComparisonConfig()
+    {
         var (stable, latest) = GetLatestVersionsAsync(PackageId)
             .GetAwaiter()
             .GetResult();
@@ -33,7 +35,8 @@ public class VersionComparisonConfig : ManualConfig {
             .WithId($"Latest-{latest.ToNormalizedString()}"));
     }
 
-    private static async Task<(NuGetVersion stable, NuGetVersion latest)> GetLatestVersionsAsync(string packageId) {
+    private static async Task<(NuGetVersion stable, NuGetVersion latest)> GetLatestVersionsAsync(string packageId)
+    {
         // Point at the official NuGet v3 API
         var source = Repository.Factory.GetCoreV3("https://api.nuget.org/v3/index.json");
         var metaResource = await source.GetResourceAsync<PackageMetadataResource>();

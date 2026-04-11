@@ -2,16 +2,19 @@
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Removes {
+public class Removes
+{
     [Fact]
-    public async Task TryRemove_When_Not_Found_Returns_False() {
+    public async Task TryRemove_When_Not_Found_Returns_False()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         Assert.False(db.TryRemove("1"));
     }
 
     [Fact]
-    public async Task TryRemove_NotFound_DoesNotIncrementPendingChanges() {
+    public async Task TryRemove_NotFound_DoesNotIncrementPendingChanges()
+    {
         // Arrange
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.PendingChanges);
@@ -25,7 +28,8 @@ public class Removes {
     }
 
     [Fact]
-    public async Task TryRemove_When_Found_Returns_True() {
+    public async Task TryRemove_When_Found_Returns_True()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -33,7 +37,8 @@ public class Removes {
     }
 
     [Fact]
-    public async Task TryRemove_When_Found_Removes() {
+    public async Task TryRemove_When_Found_Removes()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);
@@ -46,7 +51,8 @@ public class Removes {
     }
 
     [Fact]
-    public async Task Clear_Removes_All_From_Db() {
+    public async Task Clear_Removes_All_From_Db()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         db.Upsert("1", 1, JContext.Default.Int32);

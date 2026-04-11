@@ -4,7 +4,8 @@ namespace ArrowDbCore;
 /// Thrown when a file-backed <see cref="ArrowDb"/> cannot acquire exclusive ownership
 /// of the underlying database file.
 /// </summary>
-public sealed class ArrowDbOwnershipException : IOException {
+public sealed class ArrowDbOwnershipException : IOException
+{
     /// <summary>
     /// Initializes a new instance of the <see cref="ArrowDbOwnershipException"/> class.
     /// </summary>
