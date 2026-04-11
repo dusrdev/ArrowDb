@@ -156,8 +156,8 @@ And removal:
 
 ```csharp
 bool db.TryRemove(ReadOnlySpan<char> key);  // removes the entry with the specified key
-bool db.TryClear();                        // clears all entries; returns false if a concurrent RollbackAsync occurred
-void db.Clear();                           // obsolete: use TryClear()
+bool db.TryClear();                         // clears all entries; returns false if a concurrent RollbackAsync occurred
+void db.Clear();                            // obsolete: use TryClear()
 ```
 
 ## Optimistic Concurrency Control
@@ -286,7 +286,7 @@ If the value exists, the asynchronous factory method is not called, and the valu
 
 `GetOrAddAsync` is intentionally **not atomic**. Under concurrency, `valueFactory` may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
 
-Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
+Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by calling `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
 
 Similarly to `Upsert` - `GetOrAddAsync` also has an overload that accepts `TArg` and and enables closure free execution for optimal performance.
 
@@ -296,7 +296,7 @@ As seen earlier, the default recommended serializer is `FileSerializer`, which s
 
 ```csharp
 string path = "store.db";
-using var aes = Aes.Create();
+var aes = Aes.Create(); // aes lifetime should match the db instance as the serializer relies on it
 var db = await ArrowDb.CreateFromFileWithAes(path, aes);
 ```
 

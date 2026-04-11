@@ -53,7 +53,7 @@ public partial class ArrowDb {
     /// <param name="serializer">A custom <see cref="IDbSerializer"/> implementation</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer, CancellationToken cancellationToken = default) {
+    public static async ValueTask<ArrowDb> CreateCustom<TSerializer>(TSerializer serializer, CancellationToken cancellationToken = default) where TSerializer : IDbSerializer {
         cancellationToken.ThrowIfCancellationRequested();
         return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
@@ -65,7 +65,7 @@ public partial class ArrowDb {
     /// <param name="disposeSerializer">Whether the returned <see cref="ArrowDb"/> instance owns the serializer lifetime.</param>
     /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken = default) {
+    public static async ValueTask<ArrowDb> CreateCustom<TSerializer>(TSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken = default) where TSerializer : IDbSerializer {
         cancellationToken.ThrowIfCancellationRequested();
         return await CreateFromSerializer(serializer, disposeSerializer, cancellationToken);
     }
@@ -97,7 +97,7 @@ public partial class ArrowDb {
         public static readonly string TypeName = typeof(T).Name;
     }
 
-    private static async ValueTask<ArrowDb> CreateFromSerializer(IDbSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken) {
+    private static async ValueTask<ArrowDb> CreateFromSerializer<TSerializer>(TSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken) where TSerializer : IDbSerializer {
         try {
             var data = await serializer.DeserializeAsync(cancellationToken);
             return new ArrowDb(data, serializer, disposeSerializer);
