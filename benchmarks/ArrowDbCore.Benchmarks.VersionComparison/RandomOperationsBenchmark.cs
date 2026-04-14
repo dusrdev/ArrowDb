@@ -33,7 +33,7 @@ public class RandomOperationsBenchmarks
 
         Trace.Assert(_items.Length == Count);
 
-        _db = ArrowDb.CreateInMemory().GetAwaiter().GetResult();
+        _db = ArrowDb.CreateInMemory().AsTask().GetAwaiter().GetResult();
     }
 
     [Benchmark]

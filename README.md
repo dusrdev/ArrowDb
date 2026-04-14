@@ -14,7 +14,7 @@ ArrowDb is a fast, lightweight, and type-safe key-value database designed for .N
 
 * Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
 * Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
-* Minimal-Allocation (constant ~520 bytes for serialization of any db size)
+* Aggressively Optimized Low-Allocation Persistence
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)

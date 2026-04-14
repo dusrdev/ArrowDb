@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using ArrowDbCore.Benchmarks.Common;
+using ArrowDbCore.Serializers;
 
 using BenchmarkDotNet.Attributes;
 
@@ -15,6 +16,7 @@ namespace ArrowDbCore.Benchmarks;
 [MediumRunJob]
 public class SerializationToFileBenchmarks
 {
+    private FileSerializer? _fileSerializer;
     private ArrowDb _db = default!;
 
     [Params(100, 10_000, 1_000_000)]
@@ -28,7 +30,8 @@ public class SerializationToFileBenchmarks
             Random = new Randomizer(1337)
         };
 
-        _db = ArrowDb.CreateFromFile("test.db").GetAwaiter().GetResult();
+        _fileSerializer = new("test.db", ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
+        _db = ArrowDb.CreateCustom(_fileSerializer).AsTask().GetAwaiter().GetResult();
 
         Span<char> buffer = stackalloc char[64];
 
@@ -45,6 +48,8 @@ public class SerializationToFileBenchmarks
     [IterationCleanup]
     public void Cleanup()
     {
+        _fileSerializer?.Dispose();
+
         if (File.Exists("test.db"))
         {
             File.Delete("test.db");

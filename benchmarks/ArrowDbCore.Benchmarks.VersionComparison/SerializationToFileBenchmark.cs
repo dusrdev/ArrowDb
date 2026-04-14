@@ -16,6 +16,7 @@ namespace ArrowDbCore.Benchmarks.VersionComparison;
 public class SerializationToFileBenchmarks
 {
     private ArrowDb _db = default!;
+    private string _dbPath = default!;
 
     [Params(100, 10_000, 1_000_000)]
     public int Size { get; set; }
@@ -28,7 +29,8 @@ public class SerializationToFileBenchmarks
             Random = new Randomizer(1337)
         };
 
-        _db = ArrowDb.CreateFromFile("test.db").GetAwaiter().GetResult();
+        _dbPath = $"test-{Guid.NewGuid():N}.db";
+        _db = ArrowDb.CreateFromFile(_dbPath).AsTask().GetAwaiter().GetResult();
 
         Span<char> buffer = stackalloc char[64];
 
@@ -45,9 +47,9 @@ public class SerializationToFileBenchmarks
     [IterationCleanup]
     public void Cleanup()
     {
-        if (File.Exists("test.db"))
+        if (File.Exists(_dbPath))
         {
-            File.Delete("test.db");
+            File.Delete(_dbPath);
         }
     }
 
