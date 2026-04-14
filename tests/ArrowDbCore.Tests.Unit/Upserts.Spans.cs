@@ -2,9 +2,11 @@
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Upserts_Spans {
+public class Upserts_Spans
+{
     [Fact]
-    public async Task Upsert_Span_When_Not_Found_Inserts() {
+    public async Task Upsert_Span_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -14,7 +16,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Upsert_Span_When_Found_Overwrites() {
+    public async Task Upsert_Span_When_Found_Overwrites()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -27,7 +30,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Not_Found_Inserts() {
+    public async Task Conditional_Update_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -35,7 +39,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_And_Valid_Updates() {
+    public async Task Conditional_Update_When_Found_And_Valid_Updates()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -46,7 +51,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_And_Invalid_Returns_False() {
+    public async Task Conditional_Update_When_Found_And_Invalid_Returns_False()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -57,7 +63,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_When_Found_Default_ForValueType_StillEvaluatesCondition() {
+    public async Task Conditional_Update_When_Found_Default_ForValueType_StillEvaluatesCondition()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -68,7 +75,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Not_Found_Inserts() {
+    public async Task Conditional_Update_TArg_When_Not_Found_Inserts()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -77,7 +85,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Found_And_Valid_Updates() {
+    public async Task Conditional_Update_TArg_When_Found_And_Valid_Updates()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";
@@ -89,7 +98,8 @@ public class Upserts_Spans {
     }
 
     [Fact]
-    public async Task Conditional_Update_TArg_When_Found_And_Invalid_Returns_False() {
+    public async Task Conditional_Update_TArg_When_Found_And_Invalid_Returns_False()
+    {
         var db = await ArrowDb.CreateInMemory();
         Assert.Equal(0, db.Count);
         ReadOnlySpan<char> key = "1";

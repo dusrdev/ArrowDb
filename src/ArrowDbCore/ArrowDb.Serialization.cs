@@ -2,23 +2,33 @@
 
 namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Serializes the database
     /// </summary>
     /// <remarks>
     /// If there are no pending updates, this method does nothing, otherwise it serializes the database and resets the pending updates counter
     /// </remarks>
-    public async Task SerializeAsync() {
-        if (Interlocked.Read(ref _pendingChanges) == 0) {
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public async Task SerializeAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+
+        if (Interlocked.Read(ref _pendingChanges) == 0)
+        {
             return;
         }
-        try {
-            await Semaphore.WaitAsync();
+
+        await Semaphore.WaitAsync(cancellationToken);
+        try
+        {
             var observedPendingChanges = Interlocked.Read(ref _pendingChanges);
-            await Serializer.SerializeAsync(Source);
+            await Serializer.SerializeAsync(Source, cancellationToken);
             Interlocked.CompareExchange(ref _pendingChanges, 0, observedPendingChanges); // reset pending changes only if unchanged
-        } finally {
+        }
+        finally
+        {
             Semaphore.Release();
         }
     }
@@ -27,8 +37,10 @@ public partial class ArrowDb {
     /// Waits for the semaphore if the database is currently serializing
     /// </summary>
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    private void WaitIfSerializing() {
-        if (Semaphore.CurrentCount == 0) {
+    private void WaitIfSerializing()
+    {
+        if (Semaphore.CurrentCount == 0)
+        {
             Semaphore.Wait();
             Semaphore.Release();
         }
@@ -37,16 +49,23 @@ public partial class ArrowDb {
     /// <summary>
     /// Rolls the entire database to the last persisted state
     /// </summary>
-    public async Task RollbackAsync() {
-        try {
-            await Semaphore.WaitAsync();
+    /// <param name="cancellationToken">A cancellation token.</param>
+    public async Task RollbackAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+
+        await Semaphore.WaitAsync(cancellationToken);
+        try
+        {
             Interlocked.Increment(ref StateEpoch);
-            var prevState = await Serializer.DeserializeAsync();
+            var prevState = await Serializer.DeserializeAsync(cancellationToken);
             Source.Clear();
             Interlocked.Exchange(ref Source, prevState);
             Lookup = Source.GetAlternateLookup<ReadOnlySpan<char>>();
             Interlocked.Exchange(ref _pendingChanges, 0);
-        } finally {
+        }
+        finally
+        {
             Semaphore.Release();
         }
     }

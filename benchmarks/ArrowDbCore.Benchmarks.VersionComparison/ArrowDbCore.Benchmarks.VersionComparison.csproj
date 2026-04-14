@@ -5,21 +5,30 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UseLocalArrowDb Condition="'$(UseLocalArrowDb)' == ''">false</UseLocalArrowDb>
+    <ArrowDbPackageVersion Condition="'$(ArrowDbPackageVersion)' == ''">1.6.0</ArrowDbPackageVersion>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="BenchmarkDotNet" Version="0.15.8" />
     <PackageReference Include="Bogus" Version="35.6.5" />
+    <PackageReference Include="LibGit2Sharp" Version="0.31.0" />
 
     <PackageReference Include="NuGet.Protocol" Version="7.0.1" />
     <PackageReference Include="NuGet.Versioning" Version="7.0.1" />
     <PackageReference Include="NuGet.Common" Version="7.0.1" />
-
-    <PackageReference Include="ArrowDb" Version="1.5.0" />
   </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\ArrowDbCore.Benchmarks.Common\ArrowDbCore.Benchmarks.Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalArrowDb)' == 'true'">
+    <ProjectReference Include="../../src/ArrowDbCore/ArrowDbCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup Condition="'$(UseLocalArrowDb)' != 'true'">
+    <PackageReference Include="ArrowDb" Version="$(ArrowDbPackageVersion)" />
   </ItemGroup>
 
 </Project>

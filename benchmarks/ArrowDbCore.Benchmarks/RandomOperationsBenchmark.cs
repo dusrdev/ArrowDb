@@ -13,7 +13,8 @@ namespace ArrowDbCore.Benchmarks;
 [MemoryDiagnoser(false)]
 [RankColumn]
 [MediumRunJob]
-public class RandomOperationsBenchmarks {
+public class RandomOperationsBenchmarks
+{
     private Person[] _items = [];
     private ArrowDb _db = default!;
 
@@ -21,8 +22,10 @@ public class RandomOperationsBenchmarks {
     public int Count { get; set; }
 
     [IterationSetup]
-    public void Setup() {
-        var faker = new Faker {
+    public void Setup()
+    {
+        var faker = new Faker
+        {
             Random = new Randomizer(1337)
         };
 
@@ -30,12 +33,14 @@ public class RandomOperationsBenchmarks {
 
         Trace.Assert(_items.Length == Count);
 
-        _db = ArrowDb.CreateInMemory().GetAwaiter().GetResult();
+        _db = ArrowDb.CreateInMemory().AsTask().GetAwaiter().GetResult();
     }
 
     [Benchmark]
-    public void RandomOperations() {
-        Parallel.For(0, Count, i => {
+    public void RandomOperations()
+    {
+        Parallel.For(0, Count, i =>
+        {
             // Pick a random operation: 0 = add/update, 1 = remove
             int operationType = Random.Shared.Next(0, 2);
 
@@ -44,7 +49,8 @@ public class RandomOperationsBenchmarks {
             var key = item.Name;
             var jsonTypeInfo = JContext.Default.Person;
 
-            switch (operationType) {
+            switch (operationType)
+            {
                 case 0: // Add/Update
                     _db.Upsert(key, item, jsonTypeInfo);
                     break;

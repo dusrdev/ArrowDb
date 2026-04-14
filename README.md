@@ -14,7 +14,7 @@ ArrowDb is a fast, lightweight, and type-safe key-value database designed for .N
 
 * Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
 * Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
-* Minimal-Allocation (constant ~520 bytes for serialization of any db size)
+* Aggressively Optimized Low-Allocation Persistence
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)
@@ -29,18 +29,13 @@ This policy does not affect value types (`structs`); their `default` values (e.g
 
 ## Getting Started
 
-Installation is done via NuGet: `dotnet add package ArrowDbCore`
+Installation is done via NuGet: `dotnet add package ArrowDb`
 
-Initializing the db is done via the factory methods, they return the instance as `ValueTask` and may or may not be asynchronous depending on the selected serializer implementation. The default serializer is `FileSerializer`, which serializes the db to a file on disk. The following example demonstrates its usage, and more details on serializers will be discussed later.
+Initializing the db is done via the factory methods, they return the instance as `ValueTask` and may or may not be asynchronous depending on the selected serializer implementation. The default serializer is `FileSerializer`, which serializes the db to a file on disk. These async APIs accept an optional `CancellationToken`. The following example demonstrates the basic usage, and more details on serializers will be discussed later.
 
 ```csharp
 // manual instance creation
 var db = await ArrowDb.CreateFromFile("path.db");
-// or with dependency injection
-builder.Services.AddSingleton(_ => ArrowDb.CreateFromFile("path.db").GetAwaiter().GetResult());
-// the default DI container doesn't support async, so we hack it with GetAwaiter().GetResult()
-// in the case of ArrowDb FileSerializer, this ValueTask is actually synchronous so this is fine
-// in cases of different serializers, you can use Lazy<T> or other workarounds
 ```
 
 This will either create a new ArrowDb instance, or load an existing one from the specified path, if exists.
@@ -82,7 +77,42 @@ Up until now, the data was stored in-memory, to finalize and persist the changes
 
 ```csharp
 await db.SerializeAsync();
+// or
+await db.SerializeAsync(cancellationToken);
 ```
+
+## Hosted Dependency Injection
+
+For applications that use the default .NET host / dependency injection stack, use the companion package:
+
+```bash
+dotnet add package ArrowDb.DependencyInjection
+```
+
+This package exposes `IArrowDbProvider` plus the public generic `ArrowDbProvider<TSerializer>`. Register the serializer you want to use, then register the provider over that serializer type.
+
+```csharp
+builder.Services.AddSingleton(new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray));
+builder.Services.AddSingleton<IArrowDbProvider, ArrowDbProvider<FileSerializer>>();
+builder.Services.AddArrowDbInitialization();
+
+public sealed class MyService {
+    private readonly IArrowDbProvider _provider;
+
+    public MyService(IArrowDbProvider provider) {
+        _provider = provider;
+    }
+
+    public async Task<int> CountAsync() {
+        ArrowDb db = await _provider.GetAsync();
+        return db.Count;
+    }
+}
+```
+
+`AddArrowDbInitialization()` is optional. Add it when you want eager host-startup priming for a singleton provider. Otherwise the provider stays lazy and initializes on first `GetAsync(...)`.
+
+`ArrowDbProvider<TSerializer>` does not dispose the serializer by default. That is the right default when the serializer is registered separately in DI and the container owns it. If you want the provider to own the serializer lifetime instead, register it with a factory and pass `disposeSerializer: true`.
 
 ## APIs
 
@@ -126,8 +156,8 @@ And removal:
 
 ```csharp
 bool db.TryRemove(ReadOnlySpan<char> key);  // removes the entry with the specified key
-bool db.TryClear();                        // clears all entries; returns false if a concurrent RollbackAsync occurred
-void db.Clear();                           // obsolete: use TryClear()
+bool db.TryClear();                         // clears all entries; returns false if a concurrent RollbackAsync occurred
+void db.Clear();                            // obsolete: use TryClear()
 ```
 
 ## Optimistic Concurrency Control
@@ -232,9 +262,13 @@ var people = keys.Where(k => k.StartsWith(prefix));
 
 ```csharp
 var db = await ArrowDb.CreateInMemory();
-// or with dependency injection
-builder.Services.AddSingleton(() => ArrowDb.CreateInMemory().GetAwaiter().GetResult());
-// Since this isn’t persisted, you may also use it as a Transient or Scoped service (whatever fits your needs).
+```
+
+For hosted DI usage, register the in-memory variant through `ArrowDb.DependencyInjection`:
+
+```csharp
+builder.Services.AddSingleton(new InMemorySerializer());
+builder.Services.AddSingleton<IArrowDbProvider, ArrowDbProvider<InMemorySerializer>>();
 ```
 
 A common code pattern for caching usually consists of some `GetOrAdd` method, that will check if a value exists by the key, and return it, otherwise it will accept a method used to generate the value, which will be used to add the value to the cache, then return it.
@@ -242,17 +276,17 @@ A common code pattern for caching usually consists of some `GetOrAdd` method, th
 `ArrowDb` supports this via the `async ValueTask` method:
 
 ```csharp
-async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, ValueTask<TValue>> valueFactory);
-async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, ValueTask<TValue>> valueFactory, TArg factoryArgument);
+async ValueTask<TValue> GetOrAddAsync<TValue>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, CancellationToken, ValueTask<TValue>> valueFactory, CancellationToken cancellationToken = default);
+async ValueTask<TValue> GetOrAddAsync<TValue, TArg>(string key, JsonTypeInfo<TValue> jsonTypeInfo, Func<string, TArg, CancellationToken, ValueTask<TValue>> valueFactory, TArg factoryArgument, CancellationToken cancellationToken = default);
 ```
 
-If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will produce the value, `Upsert` it, then return it.
+If the value exists, the asynchronous factory method is not called, and the value is returned synchronously. Otherwise the factory will receive the key and the supplied `CancellationToken`, produce the value, `Upsert` it, then return it.
 
 ### Concurrency Note
 
 `GetOrAddAsync` is intentionally **not atomic**. Under concurrency, `valueFactory` may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
 
-Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by called `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
+Since `ArrowDb` was not made specifically to cache, it doesn't store time metadata for values, because of this, there will not be a method that accepts "cache expiration" or similar options in the foreseen future. Such scenarios will need to implemented client-side, best done with a pattern that splits read and write, by calling `TryGetValue` which will also check the inner time reference, if false and out of date, will generate the value and use `Upsert`.
 
 Similarly to `Upsert` - `GetOrAddAsync` also has an overload that accepts `TArg` and and enables closure free execution for optimal performance.
 
@@ -262,11 +296,16 @@ As seen earlier, the default recommended serializer is `FileSerializer`, which s
 
 ```csharp
 string path = "store.db";
-using var aes = Aes.Create();
+var aes = Aes.Create(); // aes lifetime should match the db instance as the serializer relies on it
 var db = await ArrowDb.CreateFromFileWithAes(path, aes);
-// or with dependency injection
+```
+
+For hosted DI usage:
+
+```csharp
 builder.Services.AddSingleton(_ => Aes.Create());
-builder.Services.AddSingleton(services => ArrowDb.CreateFromFileWithAes(path, services.GetRequiredService<Aes>()).GetAwaiter().GetResult());
+builder.Services.AddSingleton(services => new AesFileSerializer(path, services.GetRequiredService<Aes>(), ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray));
+builder.Services.AddSingleton<IArrowDbProvider, ArrowDbProvider<AesFileSerializer>>();
 ```
 
 ## Serialization
@@ -283,12 +322,15 @@ The `IDbSerializer` is exposed and can be used to implement custom serializers:
 
 ```csharp
 public interface IDbSerializer {
-    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync();
-    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data);
+    bool IsDisposed { get; }
+    ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeAsync(CancellationToken cancellationToken = default);
+    ValueTask SerializeAsync(ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken = default);
+    void Dispose();
+    ValueTask DisposeAsync();
 }
 ```
 
-The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic and multi-process safe writes out of the box.
+The `DeserializeAsync` method is invoked to load the db, and the `SerializeAsync` method is invoked to persist the db. The disposal contract allows hosted integrations to release serializer-owned resources deterministically. For custom file-based serializers, it is recommended to inherit from `BaseFileSerializer` to get atomic writes, single-owner writable file semantics, and async file I/O out of the box.
 
 Being that they return a `ValueTask`, the implementations can be async. This means that you can even implement serializers to persist the db to a remote server, or cloud, or whatever else you want.
 
@@ -306,6 +348,8 @@ In case you want to rollback the changes, you can call the following method:
 
 ```csharp
 await db.RollbackAsync();
+// or
+await db.RollbackAsync(cancellationToken);
 ```
 
 `RollbackAsync` restores the last persisted state (as returned by your current serializer) by:
@@ -314,6 +358,12 @@ await db.RollbackAsync();
 2. The db is cleared.
 3. The db source reference is atomically replaced with the persisted version.
 4. Pending changes counter is reset to 0.
+
+## File-backed ownership
+
+The built-in file-backed serializers (`FileSerializer` and `AesFileSerializer`) are single-owner writable. The first process that opens a database file owns it for the lifetime of that serializer instance. A second writable open against the same path fails fast with `ArrowDbOwnershipException`.
+
+This is intentional: ArrowDb keeps the live state in-process and persists snapshots to disk. The persisted file is not a shared live database between processes.
 
 ### Concurrency note: `RollbackAsync` and writers
 
@@ -335,20 +385,20 @@ While the above definition explains how users can manually control the transacti
 ```csharp
 var db = await ArrowDb.CreateFromFile("path.db");
 // this uses a "using" statement.
-await using (var scope = db.BeginTransaction()) {
+await using (var scope = db.BeginTransaction(cancellationToken)) {
     db.Upsert(john.Name, john, MyJsonContext.Default.Person);
 }
 // the scope was disposed, and SerializeAsync was called implicitly
 // The same also works with a "using" declaration, that will bind to the containing scope
 void SomeMethod() {
-    await using var scope = db.BeginTransaction();
+    await using var scope = db.BeginTransaction(cancellationToken);
     db.Upsert(john.Name, john, MyJsonContext.Default.Person);
 } // the function scope ends here, and implicitly closes the scope of the transaction
 ```
 
-Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed.
+Using a transaction scope ensures that `SerializeAsync` is always called, even if an `Exception` is thrown. These scopes can be nested, and serialization will only occur when the outermost scope is disposed. If the `CancellationToken` passed to the outermost scope is canceled before disposal commits, the implicit serialize throws `OperationCanceledException` and the pending changes remain in memory until you retry `SerializeAsync` or call `RollbackAsync`.
 
-`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner, with the built in file-based serializers (`FileSerializer` and `AesFileSerializer`) it is completely safe as they naturally operate synchronously. However if you implemented a remote serializer or an `async` one, you should use the `Async Disposable` pattern accordingly.
+`ArrowDbTransactionScope` also implements the regular `IDisposable` interface, meaning it can be used in a non-`async` method. However it internally calls the `DisposeAsync` method in a blocking manner. This works with the built-in file-based serializers, but it will block on file I/O during commit. In asynchronous code, prefer the `Async Disposable` pattern accordingly.
 
 ## Subscribing to Changes
 

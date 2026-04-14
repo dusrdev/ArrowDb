@@ -1,6 +1,7 @@
 using System.Diagnostics;
 
 using ArrowDbCore.Benchmarks.Common;
+using ArrowDbCore.Serializers;
 
 using BenchmarkDotNet.Attributes;
 
@@ -13,23 +14,29 @@ namespace ArrowDbCore.Benchmarks;
 [MemoryDiagnoser(false)]
 [RankColumn]
 [MediumRunJob]
-public class SerializationToFileBenchmarks {
+public class SerializationToFileBenchmarks
+{
+    private FileSerializer? _fileSerializer;
     private ArrowDb _db = default!;
 
     [Params(100, 10_000, 1_000_000)]
     public int Size { get; set; }
 
     [IterationSetup]
-    public void Setup() {
-        var faker = new Faker {
+    public void Setup()
+    {
+        var faker = new Faker
+        {
             Random = new Randomizer(1337)
         };
 
-        _db = ArrowDb.CreateFromFile("test.db").GetAwaiter().GetResult();
+        _fileSerializer = new("test.db", ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
+        _db = ArrowDb.CreateCustom(_fileSerializer).AsTask().GetAwaiter().GetResult();
 
         Span<char> buffer = stackalloc char[64];
 
-        foreach (var person in Person.GeneratePeople(Size, faker)) {
+        foreach (var person in Person.GeneratePeople(Size, faker))
+        {
             _ = person.Id.TryFormat(buffer, out var written);
             var id = buffer.Slice(0, written);
             _db.Upsert(id, person, JContext.Default.Person);
@@ -39,14 +46,19 @@ public class SerializationToFileBenchmarks {
     }
 
     [IterationCleanup]
-    public void Cleanup() {
-        if (File.Exists("test.db")) {
+    public void Cleanup()
+    {
+        _fileSerializer?.Dispose();
+
+        if (File.Exists("test.db"))
+        {
             File.Delete("test.db");
         }
     }
 
     [Benchmark]
-    public async Task SerializeAsync() {
+    public async Task SerializeAsync()
+    {
         await _db.SerializeAsync();
     }
 }

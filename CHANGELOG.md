@@ -1,5 +1,20 @@
 # Changelog (Sorted by Date in Descending Order)
 
+## 2.0.0.0
+
+- Added optional `CancellationToken` parameters to ArrowDb async APIs, including factory initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and `BeginTransaction`.
+- Updated `GetOrAddAsync` factory delegates to receive the active `CancellationToken`.
+- Added `ArrowDb.DependencyInjection` with `IArrowDbProvider`, the public generic `ArrowDbProvider<TSerializer>`, and an optional hosted-service primer for eager startup initialization.
+- `ArrowDb.CreateCustom(...)` now has an overload that accepts `disposeSerializer` so serializer ownership can be explicitly assigned; `ArrowDbProvider<TSerializer>` defaults to external serializer ownership and can opt into owning disposal.
+- Updated the public `IDbSerializer` contract to receive an optional `CancellationToken` for serialization and deserialization, track `IsDisposed`, and implement both `IDisposable` and `IAsyncDisposable`.
+- Transaction scopes can now carry a cancellation token into the outermost implicit serialize during disposal.
+- This is a breaking release for callers implementing `IDbSerializer` or calling `GetOrAddAsync` with the old delegate shapes.
+- Built-in file-backed serializers now use single-owner writable semantics and fail fast with `ArrowDbOwnershipException` if another process already owns the same database path.
+- Removed the previous cross-process writable safety claim from the built-in file serializer path; the persisted file remains a snapshot of the owning process state.
+- Built-in file-backed serializers now perform true async file and JSON I/O internally instead of synchronous work behind async signatures.
+- This is also a breaking release for custom types inheriting `BaseFileSerializer`, which must implement the new async protected override surface.
+- Removed the previous sync-over-async dependency injection guidance from the docs; hosted DI is now documented through `ArrowDb.DependencyInjection` using explicit serializer registration plus `ArrowDbProvider<TSerializer>`.
+
 ## 1.6.0.0
 
 - Improve correctness of internal change counting to ensure that changes that happened during serialization are still tracked.

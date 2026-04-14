@@ -1,16 +1,19 @@
 ﻿namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Tries to remove the specified key from the database
     /// </summary>
     /// <param name="key">The key to remove</param>
     /// <returns>True if the key was removed, false otherwise</returns>
-    public bool TryRemove(ReadOnlySpan<char> key) {
+    public bool TryRemove(ReadOnlySpan<char> key)
+    {
         var observedEpoch = Volatile.Read(ref StateEpoch);
         WaitIfSerializing(); // block if the database is currently serializing
         var removed = Lookup.TryRemove(key, out byte[]? _);
-        if (removed) {
+        if (removed)
+        {
             OnChangeInternal(ArrowDbChangeEventArgs.Remove); // trigger change event
         }
         return removed && Volatile.Read(ref StateEpoch) == observedEpoch;
@@ -20,8 +23,10 @@ public partial class ArrowDb {
     /// Tries to clear the database
     /// </summary>
     /// <returns>True if the clear was completed without a concurrent rollback, false otherwise</returns>
-    public bool TryClear() {
-        if (Source.IsEmpty) {
+    public bool TryClear()
+    {
+        if (Source.IsEmpty)
+        {
             return true;
         }
         var observedEpoch = Volatile.Read(ref StateEpoch);
@@ -35,7 +40,8 @@ public partial class ArrowDb {
     /// Clears the database
     /// </summary>
     [Obsolete("Use TryClear() instead. Clear() ignores rollback races and cannot signal if a concurrent RollbackAsync occurred.")]
-    public void Clear() {
+    public void Clear()
+    {
         _ = TryClear();
     }
 }

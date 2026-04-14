@@ -8,6 +8,7 @@
     <TargetFramework>net10.0</TargetFramework>
     <TestingPlatformDotnetTestSupport>true</TestingPlatformDotnetTestSupport>
     <UseMicrosoftTestingPlatformRunner>true</UseMicrosoftTestingPlatformRunner>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
@@ -27,6 +28,7 @@
   <ItemGroup>
     <ProjectReference Include="../../src/ArrowDbCore/ArrowDbCore.csproj" />
     <ProjectReference Include="../ArrowDbCore.Tests.Common/ArrowDbCore.Tests.Common.csproj" />
+    <ProjectReference Include="../ArrowDbCore.Tests.Probes.FileOwnership/ArrowDbCore.Tests.Probes.FileOwnership.csproj" />
   </ItemGroup>
 
 </Project>

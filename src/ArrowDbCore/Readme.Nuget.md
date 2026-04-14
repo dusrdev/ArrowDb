@@ -4,7 +4,7 @@ A fast, lightweight, and type-safe key-value database designed for .NET.
 
 * Super-Lightweight (dll size is ~19KB - approximately 9X smaller than [UltraLiteDb](https://github.com/rejemy/UltraLiteDB))
 * Ultra-Fast (1,000,000 random operations / ~98ms on M2 MacBook Pro)
-* Minimal-Allocation (constant ~520 bytes for serialization of any db size)
+* Aggressively Optimized Low-Allocation Persistence
 * Thread-Safe and Concurrent
 * ACID compliant on transaction level
 * Type-Safe (no reflection - compile-time enforced via source-generated `JsonSerializerContext`)
@@ -22,3 +22,21 @@ Information on usage can be found in the [README](https://github.com/dusrdev/Arr
 ## Concurrency note: `GetOrAddAsync`
 
 `GetOrAddAsync` is intentionally **not atomic**. Under concurrency, the factory may be invoked multiple times for the same key, and the final stored value is last-writer-wins (because the value is persisted via `Upsert`). If you need single-invocation semantics for the factory (e.g. side-effects/expensive work), guard the call site with a keyed lock.
+
+## Cancellation support
+
+ArrowDb 2.0 adds optional `CancellationToken` parameters to its async APIs, including database initialization, `SerializeAsync`, `RollbackAsync`, `GetOrAddAsync`, and the public `IDbSerializer` contract. Custom serializer implementations should update their method signatures accordingly.
+
+## Hosted dependency injection
+
+Hosted DI integration is provided by the companion package `ArrowDb.DependencyInjection`. That package exposes `IArrowDbProvider`, the public generic `ArrowDbProvider<TSerializer>`, and an optional hosted-service primer for eager startup initialization.
+
+## Serializer disposal
+
+`IDbSerializer` now tracks `IsDisposed` and implements both `IDisposable` and `IAsyncDisposable`. `ArrowDb.CreateCustom(...)` also has an overload that accepts `disposeSerializer` so serializer ownership can stay with either the database instance or the surrounding host/integration.
+
+## File-backed ownership
+
+The built-in file-backed serializers are single-owner writable. If another process already opened the same database path through ArrowDb's built-in file serializer path, the next writable open fails fast with `ArrowDbOwnershipException`.
+
+The built-in file-backed serializers also perform true async file I/O internally. Custom types inheriting from `BaseFileSerializer` should implement the async protected override surface.

@@ -4,16 +4,22 @@ using ArrowDbCore.Serializers;
 
 namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Initializes a file/disk backed database at the specified path
     /// </summary>
     /// <param name="path">The path that the file that backs the database</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateFromFile(string path) {
+    /// <exception cref="ArrowDbOwnershipException">
+    /// Thrown when another process already owns the same file-backed database path.
+    /// </exception>
+    public static async ValueTask<ArrowDb> CreateFromFile(string path, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new FileSerializer(path, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync();
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
@@ -21,31 +27,53 @@ public partial class ArrowDb {
     /// </summary>
     /// <param name="path">The path that the file that backs the database</param>
     /// <param name="aes">The <see cref="Aes"/> instance to use</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes) {
+    /// <exception cref="ArrowDbOwnershipException">
+    /// Thrown when another process already owns the same file-backed database path.
+    /// </exception>
+    public static async ValueTask<ArrowDb> CreateFromFileWithAes(string path, Aes aes, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new AesFileSerializer(path, aes, ArrowDbJsonContext.Default.ConcurrentDictionaryStringByteArray);
-        var data = await serializer.DeserializeAsync();
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
     /// Initializes an in-memory database
     /// </summary>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateInMemory() {
+    public static async ValueTask<ArrowDb> CreateInMemory(CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
         var serializer = new InMemorySerializer();
-        var data = await serializer.DeserializeAsync();
-        return new ArrowDb(data, serializer);
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
     }
 
     /// <summary>
     /// Initializes a database with a custom <see cref="IDbSerializer"/> implementation
     /// </summary>
     /// <param name="serializer">A custom <see cref="IDbSerializer"/> implementation</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
     /// <returns>A database instance</returns>
-    public static async ValueTask<ArrowDb> CreateCustom(IDbSerializer serializer) {
-        var data = await serializer.DeserializeAsync();
-        return new ArrowDb(data, serializer);
+    public static async ValueTask<ArrowDb> CreateCustom<TSerializer>(TSerializer serializer, CancellationToken cancellationToken = default) where TSerializer : IDbSerializer
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await CreateFromSerializer(serializer, disposeSerializer: true, cancellationToken);
+    }
+
+    /// <summary>
+    /// Initializes a database with a custom <see cref="IDbSerializer"/> implementation
+    /// </summary>
+    /// <param name="serializer">A custom <see cref="IDbSerializer"/> implementation</param>
+    /// <param name="disposeSerializer">Whether the returned <see cref="ArrowDb"/> instance owns the serializer lifetime.</param>
+    /// <param name="cancellationToken">A cancellation token.</param>
+    /// <returns>A database instance</returns>
+    public static async ValueTask<ArrowDb> CreateCustom<TSerializer>(TSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken = default) where TSerializer : IDbSerializer
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return await CreateFromSerializer(serializer, disposeSerializer, cancellationToken);
     }
 
     /// <summary>
@@ -57,7 +85,8 @@ public partial class ArrowDb {
     /// <returns>
     /// A key that is formatted as "<typeparamref name="T"/>:<paramref name="specificKey"/>"
     /// </returns>
-    public static ReadOnlySpan<char> GenerateTypedKey<T>(ReadOnlySpan<char> specificKey, Span<char> buffer) {
+    public static ReadOnlySpan<char> GenerateTypedKey<T>(ReadOnlySpan<char> specificKey, Span<char> buffer)
+    {
         var typeName = TypeNameCache<T>.TypeName;
         var length = typeName.Length + 1 + specificKey.Length; // type:specificKey
         ArgumentOutOfRangeException.ThrowIfGreaterThan(length, buffer.Length);
@@ -68,10 +97,25 @@ public partial class ArrowDb {
     }
 
     // A static class that caches type names during runtime
-    private static class TypeNameCache<T> {
+    private static class TypeNameCache<T>
+    {
         /// <summary>
         /// The name of the type of T
         /// </summary>
         public static readonly string TypeName = typeof(T).Name;
+    }
+
+    private static async ValueTask<ArrowDb> CreateFromSerializer<TSerializer>(TSerializer serializer, bool disposeSerializer, CancellationToken cancellationToken) where TSerializer : IDbSerializer
+    {
+        try
+        {
+            var data = await serializer.DeserializeAsync(cancellationToken);
+            return new ArrowDb(data, serializer, disposeSerializer);
+        }
+        catch
+        {
+            await serializer.DisposeAsync();
+            throw;
+        }
     }
 }

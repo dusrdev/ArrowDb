@@ -18,8 +18,8 @@ indent_size = 4
 tab_width = 4
 
 # New line preferences
-end_of_line = crlf
-insert_final_newline = false
+end_of_line = lf
+insert_final_newline = true
 
 #### .NET Coding Conventions ####
 [*.{cs,vb}]
@@ -40,10 +40,10 @@ dotnet_style_predefined_type_for_locals_parameters_members = true:silent
 dotnet_style_predefined_type_for_member_access = true:silent
 
 # Parentheses preferences
-dotnet_style_parentheses_in_arithmetic_binary_operators = always_for_clarity:silent
-dotnet_style_parentheses_in_other_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_arithmetic_binary_operators = never_if_unnecessary:silent
+dotnet_style_parentheses_in_other_binary_operators = never_if_unnecessary:silent
 dotnet_style_parentheses_in_other_operators = never_if_unnecessary:silent
-dotnet_style_parentheses_in_relational_binary_operators = always_for_clarity:silent
+dotnet_style_parentheses_in_relational_binary_operators = never_if_unnecessary:silent
 
 # Modifier preferences
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:silent
@@ -85,6 +85,8 @@ dotnet_diagnostic.IDE0301.severity = none # simplify collection initialization
 dotnet_diagnostic.IDE0053.severity = none # expression body lambda
 dotnet_diagnostic.IDE0046.severity = none # simplify if(s) - conditional operator
 dotnet_diagnostic.IDE0305.severity = none # [, ...] instead of .ToArray()
+dotnet_diagnostic.IDE0130.severity = none # Match namespace name
+dotnet_diagnostic.IDE0045.severity = none # Use conditional expression
 
 
 # namespace declaration
@@ -140,12 +142,12 @@ csharp_using_directive_placement = outside_namespace:silent
 #### C# Formatting Rules ####
 
 # New line preferences
-csharp_new_line_before_catch = false
-csharp_new_line_before_else = false
-csharp_new_line_before_finally = false
-csharp_new_line_before_members_in_anonymous_types = false
-csharp_new_line_before_members_in_object_initializers = false
-csharp_new_line_before_open_brace = none
+csharp_new_line_before_catch = true
+csharp_new_line_before_else = true
+csharp_new_line_before_finally = true
+csharp_new_line_before_members_in_anonymous_types = true
+csharp_new_line_before_members_in_object_initializers = true
+csharp_new_line_before_open_brace = all
 csharp_new_line_between_query_expression_clauses = true
 
 # Indentation preferences
@@ -249,9 +251,9 @@ dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.severity =
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.symbols = public_static_readonly_fields
 dotnet_naming_rule.public_static_readonly_fields_should_be_pascalcase.style = pascalcase
 
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.severity = suggestion
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.symbols = private_static_readonly_fields
-dotnet_naming_rule.private_static_readonly_fields_should_be_pascalcase.style = pascalcase
+dotnet_naming_rule.private_static_readonly_fields_should_be_s_camelcase.severity = suggestion
+dotnet_naming_rule.private_static_readonly_fields_should_be_s_camelcase.symbols = private_static_readonly_fields
+dotnet_naming_rule.private_static_readonly_fields_should_be_s_camelcase.style = s_camelcase
 
 dotnet_naming_rule.enums_should_be_pascalcase.severity = suggestion
 dotnet_naming_rule.enums_should_be_pascalcase.symbols = enums
@@ -307,7 +309,7 @@ dotnet_naming_symbols.non_field_members.applicable_kinds = property, event, meth
 dotnet_naming_symbols.non_field_members.applicable_accessibilities = public, internal, private, protected, protected_internal, private_protected
 dotnet_naming_symbols.non_field_members.required_modifiers = 
 
-dotnet_naming_symbols.type_parameters.applicable_kinds = namespace
+dotnet_naming_symbols.type_parameters.applicable_kinds = type_parameter
 dotnet_naming_symbols.type_parameters.applicable_accessibilities = *
 dotnet_naming_symbols.type_parameters.required_modifiers = 
 

@@ -1,11 +1,13 @@
 ﻿namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Provides an interface that unifies methods of upserting values to ArrowDb
     /// </summary>
     /// <typeparam name="TKey"></typeparam>
-    private interface IDictionaryAccessor<TKey> where TKey : allows ref struct {
+    private interface IDictionaryAccessor<TKey> where TKey : allows ref struct
+    {
         /// <summary>
         /// Assigns the <paramref name="value"/> to the <paramref name="key"/> in <paramref name="instance"/>
         /// </summary>
@@ -18,9 +20,11 @@ public partial class ArrowDb {
     /// <summary>
     /// Implements <see cref="IDictionaryAccessor{TKey}"/> by using the source dictionary directly
     /// </summary>
-    private readonly ref struct StringAccessor : IDictionaryAccessor<string> {
+    private readonly ref struct StringAccessor : IDictionaryAccessor<string>
+    {
         /// <inheritdoc />
-        public void Upsert(ArrowDb instance, string key, byte[] value) {
+        public void Upsert(ArrowDb instance, string key, byte[] value)
+        {
             instance.Source[key] = value;
         }
     }
@@ -28,9 +32,11 @@ public partial class ArrowDb {
     /// <summary>
     /// Implements <see cref="IDictionaryAccessor{TKey}"/> by using the lookup
     /// </summary>
-    private readonly ref struct ReadOnlySpanAccessor : IDictionaryAccessor<ReadOnlySpan<char>> {
+    private readonly ref struct ReadOnlySpanAccessor : IDictionaryAccessor<ReadOnlySpan<char>>
+    {
         /// <inheritdoc />
-        public void Upsert(ArrowDb instance, ReadOnlySpan<char> key, byte[] value) {
+        public void Upsert(ArrowDb instance, ReadOnlySpan<char> key, byte[] value)
+        {
             instance.Lookup[key] = value;
         }
     }

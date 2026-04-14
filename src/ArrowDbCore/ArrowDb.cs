@@ -6,7 +6,8 @@ namespace ArrowDbCore;
 /// ArrowDb
 /// </summary>
 /// <remarks>Initialize via the factory methods</remarks>
-public sealed partial class ArrowDb {
+public sealed partial class ArrowDb
+{
     /// <summary>
     /// Returns the number of active <see cref="ArrowDb"/> instances
     /// </summary>
@@ -38,6 +39,11 @@ public sealed partial class ArrowDb {
     internal readonly IDbSerializer Serializer;
 
     /// <summary>
+    /// Indicates whether this instance owns the serializer lifetime.
+    /// </summary>
+    internal readonly bool DisposeSerializer;
+
+    /// <summary>
     /// An event that is raised when any operation was performed that changes the database state, i.e, adding, updating, or removing a key, or clearing the database
     /// </summary>
     public event EventHandler<ArrowDbChangeEventArgs>? OnChange;
@@ -45,7 +51,8 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Raises the <see cref="OnChange"/> event
     /// </summary>
-    private void OnChangeInternal(ArrowDbChangeEventArgs args) {
+    private void OnChangeInternal(ArrowDbChangeEventArgs args)
+    {
         Interlocked.Increment(ref _pendingChanges);
         OnChange?.Invoke(this, args);
     }
@@ -75,10 +82,13 @@ public sealed partial class ArrowDb {
     /// </summary>
     /// <param name="source">A pre-existing or empty dictionary</param>
     /// <param name="serializer">A serializer implementation</param>
-    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer) {
+    /// <param name="disposeSerializer">Whether this instance owns the serializer lifetime.</param>
+    private ArrowDb(ConcurrentDictionary<string, byte[]> source, IDbSerializer serializer, bool disposeSerializer)
+    {
         Source = source;
         Lookup = Source.GetAlternateLookup<ReadOnlySpan<char>>();
         Serializer = serializer;
+        DisposeSerializer = disposeSerializer;
         Interlocked.Increment(ref s_runningInstances);
         Semaphore = new SemaphoreSlim(1, 1);
     }
@@ -86,9 +96,14 @@ public sealed partial class ArrowDb {
     /// <summary>
     /// Finalizer (called when the instance is garbage collected)
     /// </summary>
-    ~ArrowDb() {
-        Interlocked.Decrement(ref s_runningInstances);
+    ~ArrowDb()
+    {
+        if (DisposeSerializer)
+            Serializer.Dispose();
+
         Semaphore.Dispose();
+
+        Interlocked.Decrement(ref s_runningInstances);
     }
 
     /// <summary>
@@ -97,6 +112,11 @@ public sealed partial class ArrowDb {
     /// <remarks>
     /// The <see cref="ArrowDbTransactionScope"/> implements both <see cref="IDisposable"/> and <see cref="IAsyncDisposable"/>, allowing it to be used in both synchronous and asynchronous contexts.
     /// </remarks>
+    /// <param name="cancellationToken">A cancellation token for the outermost implicit serialize operation.</param>
     /// <returns>A new <see cref="ArrowDbTransactionScope"/> instance.</returns>
-    public ArrowDbTransactionScope BeginTransaction() => new(this);
+    public ArrowDbTransactionScope BeginTransaction(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(Serializer.IsDisposed, Serializer);
+        return new(this, cancellationToken);
+    }
 }

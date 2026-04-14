@@ -4,7 +4,8 @@ using System.Text.Json.Serialization.Metadata;
 
 namespace ArrowDbCore;
 
-public partial class ArrowDb {
+public partial class ArrowDb
+{
     /// <summary>
     /// Upsert the specified key with the specified value into the database.
     /// </summary>
@@ -13,7 +14,8 @@ public partial class ArrowDb {
     /// <param name="value">The value to upsert. This cannot be null.</param>
     /// <param name="jsonTypeInfo">The json type info for the value type</param>
     /// <returns>True if the value was upserted, false if the provided value was null.</returns>
-    public bool Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo) {
+    public bool Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo)
+    {
         return UpsertCore<string, TValue, StringAccessor>(key, value, jsonTypeInfo, default);
     }
 
@@ -28,15 +30,18 @@ public partial class ArrowDb {
     /// <remarks>
     /// This method overload which uses ReadOnlySpan{char} will not allocate a new string for the key if it already exists, instead it will directly replace the value.
     /// </remarks>
-    public bool Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo) {
+    public bool Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo)
+    {
         return UpsertCore<ReadOnlySpan<char>, TValue, ReadOnlySpanAccessor>(key, value, jsonTypeInfo, default);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private bool UpsertCore<TKey, TValue, TAccessor>(TKey key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, TAccessor accessor)
     where TKey : allows ref struct
-    where TAccessor : IDictionaryAccessor<TKey>, allows ref struct {
-        if (value is null) {
+    where TAccessor : IDictionaryAccessor<TKey>, allows ref struct
+    {
+        if (value is null)
+        {
             return false;
         }
         var observedEpoch = Volatile.Read(ref StateEpoch);
@@ -66,9 +71,11 @@ public partial class ArrowDb {
     /// <para>1. A value for the specified key exists and successfully deserialized to <typeparamref name="TValue"/></para>
     /// <para>2. <paramref name="updateCondition"/> on the reference value returns false</para>
     /// </remarks>
-    public bool Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition) {
+    public bool Upsert<TValue>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition)
+    {
         if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
-             !updateCondition(existingReference)) {
+             !updateCondition(existingReference))
+        {
             return false;
         }
         return Upsert(key, value, jsonTypeInfo);
@@ -95,9 +102,11 @@ public partial class ArrowDb {
     /// <para>1. A value for the specified key exists and successfully deserialized to <typeparamref name="TValue"/></para>
     /// <para>2. <paramref name="updateCondition"/> on the reference value returns false</para>
     /// </remarks>
-    public bool Upsert<TValue, TArg>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument) {
+    public bool Upsert<TValue, TArg>(string key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument)
+    {
         if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
-             !updateCondition(existingReference, updateConditionArgument)) {
+             !updateCondition(existingReference, updateConditionArgument))
+        {
             return false;
         }
         return Upsert(key, value, jsonTypeInfo);
@@ -125,9 +134,11 @@ public partial class ArrowDb {
     /// This method overload which uses ReadOnlySpan{char} will not allocate a new string for the key if it already exists, instead it will directly replace the value
     /// </para>
     /// </remarks>
-    public bool Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition) {
+    public bool Upsert<TValue>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, bool> updateCondition)
+    {
         if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
-             !updateCondition(existingReference)) {
+             !updateCondition(existingReference))
+        {
             return false;
         }
         return Upsert(key, value, jsonTypeInfo);
@@ -157,9 +168,11 @@ public partial class ArrowDb {
     /// This method overload which uses ReadOnlySpan{char} will not allocate a new string for the key if it already exists, instead it will directly replace the value
     /// </para>
     /// </remarks>
-    public bool Upsert<TValue, TArg>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument) {
+    public bool Upsert<TValue, TArg>(ReadOnlySpan<char> key, TValue value, JsonTypeInfo<TValue> jsonTypeInfo, Func<TValue, TArg, bool> updateCondition, TArg updateConditionArgument)
+    {
         if (TryGetValue(key, jsonTypeInfo, out TValue existingReference) &&
-             !updateCondition(existingReference, updateConditionArgument)) {
+             !updateCondition(existingReference, updateConditionArgument))
+        {
             return false;
         }
         return Upsert(key, value, jsonTypeInfo);

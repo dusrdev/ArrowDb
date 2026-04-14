@@ -4,36 +4,60 @@ using ArrowDbCore.Tests.Common;
 
 namespace ArrowDbCore.Tests.Unit;
 
-public class Concurrency {
+public class Concurrency
+{
     [Theory]
     [InlineData(true)]
     [InlineData(false)]
-    public async Task Concurrent_Writes_ShouldBe_ThreadSafe(bool useAes) {
+    public async Task Concurrent_Writes_ShouldBe_ThreadSafe(bool useAes)
+    {
         // Arrange
         var path = Path.GetTempFileName();
         using var aes = Aes.Create();
-        var db = await CreateDb(path, useAes, aes);
-        var person = new Person { Name = "John", Age = 42, BirthDate = DateTime.UtcNow, IsMarried = false };
-        var taskCount = 100;
-        var tasks = new Task[taskCount];
+        ArrowDb? db = null;
+        ArrowDb? db2 = null;
+        try
+        {
+            db = await CreateDb(path, useAes, aes);
+            var person = new Person { Name = "John", Age = 42, BirthDate = DateTime.UtcNow, IsMarried = false };
+            var taskCount = 100;
+            var tasks = new Task[taskCount];
 
-        // Act
-        for (var i = 0; i < taskCount; i++) {
-            var key = $"key{i}";
-            tasks[i] = Task.Run(() => db.Upsert(key, person, JContext.Default.Person));
+            // Act
+            for (var i = 0; i < taskCount; i++)
+            {
+                var key = $"key{i}";
+                tasks[i] = Task.Run(() => db.Upsert(key, person, JContext.Default.Person));
+            }
+
+            await Task.WhenAll(tasks);
+            await db.SerializeAsync();
+            FileBackedTestHelpers.ReleaseOwnership(db);
+
+            // Assert
+            db2 = await CreateDb(path, useAes, aes);
+            Assert.Equal(taskCount, db2.Count);
         }
+        finally
+        {
+            if (db2 is not null)
+            {
+                FileBackedTestHelpers.ReleaseOwnership(db2);
+            }
 
-        await Task.WhenAll(tasks);
-        await db.SerializeAsync();
+            if (db is not null)
+            {
+                FileBackedTestHelpers.ReleaseOwnership(db);
+            }
 
-        // Assert
-        var db2 = await CreateDb(path, useAes, aes);
-        Assert.Equal(taskCount, db2.Count);
-        File.Delete(path);
+            FileBackedTestHelpers.DeleteArtifacts(path);
+        }
     }
 
-    private async Task<ArrowDb> CreateDb(string path, bool useAes, Aes? aes = null) {
-        if (useAes) {
+    private async Task<ArrowDb> CreateDb(string path, bool useAes, Aes? aes = null)
+    {
+        if (useAes)
+        {
             return await ArrowDb.CreateFromFileWithAes(path, aes!);
         }
 

@@ -8,7 +8,8 @@ namespace ArrowDbCore.Serializers;
 /// <summary>
 /// An <see cref="Aes"/> managed file/disk backed serializer.
 /// </summary>
-public sealed class AesFileSerializer : BaseFileSerializer {
+public sealed class AesFileSerializer : BaseFileSerializer
+{
     private readonly Aes _aes;
     private readonly JsonTypeInfo<ConcurrentDictionary<string, byte[]>> _jsonTypeInfo;
 
@@ -19,23 +20,26 @@ public sealed class AesFileSerializer : BaseFileSerializer {
     /// <param name="aes">The <see cref="Aes"/> instance to use.</param>
     /// <param name="jsonTypeInfo">The json type info for the dictionary.</param>
     public AesFileSerializer(string path, Aes aes, JsonTypeInfo<ConcurrentDictionary<string, byte[]>> jsonTypeInfo)
-        : base(path) {
+        : base(path)
+    {
         _aes = aes;
         _jsonTypeInfo = jsonTypeInfo;
     }
 
     /// <inheritdoc />
-    protected override void SerializeData(Stream stream, ConcurrentDictionary<string, byte[]> data) {
+    protected override async ValueTask SerializeDataAsync(Stream stream, ConcurrentDictionary<string, byte[]> data, CancellationToken cancellationToken)
+    {
         using var encryptor = _aes.CreateEncryptor();
-        using var cryptoStream = new CryptoStream(stream, encryptor, CryptoStreamMode.Write);
-        JsonSerializer.Serialize(cryptoStream, data, _jsonTypeInfo);
+        await using var cryptoStream = new CryptoStream(stream, encryptor, CryptoStreamMode.Write, leaveOpen: true);
+        await JsonSerializer.SerializeAsync(cryptoStream, data, _jsonTypeInfo, cancellationToken);
     }
 
     /// <inheritdoc />
-    protected override ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeData(Stream stream) {
+    protected override async ValueTask<ConcurrentDictionary<string, byte[]>> DeserializeDataAsync(Stream stream, CancellationToken cancellationToken)
+    {
         using var decryptor = _aes.CreateDecryptor();
-        using var cryptoStream = new CryptoStream(stream, decryptor, CryptoStreamMode.Read);
-        var res = JsonSerializer.Deserialize(cryptoStream, _jsonTypeInfo);
-        return ValueTask.FromResult(res ?? new ConcurrentDictionary<string, byte[]>());
+        await using var cryptoStream = new CryptoStream(stream, decryptor, CryptoStreamMode.Read, leaveOpen: true);
+        ConcurrentDictionary<string, byte[]>? result = await JsonSerializer.DeserializeAsync(cryptoStream, _jsonTypeInfo, cancellationToken);
+        return result ?? new ConcurrentDictionary<string, byte[]>();
     }
 }

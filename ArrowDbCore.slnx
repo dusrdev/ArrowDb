@@ -6,11 +6,14 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/ArrowDbCore/ArrowDbCore.csproj" />
+    <Project Path="src/ArrowDbCore.DependencyInjection/ArrowDbCore.DependencyInjection.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ArrowDbCore.Tests.Analyzers/ArrowDbCore.Tests.Analyzers.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Common/ArrowDbCore.Tests.Common.csproj" />
+    <Project Path="tests/ArrowDbCore.DependencyInjection.Tests/ArrowDbCore.DependencyInjection.Tests.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Integrity/ArrowDbCore.Tests.Integrity.csproj" />
+    <Project Path="tests/ArrowDbCore.Tests.Probes.FileOwnership/ArrowDbCore.Tests.Probes.FileOwnership.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Unit.Isolated/ArrowDbCore.Tests.Unit.Isolated.csproj" />
     <Project Path="tests/ArrowDbCore.Tests.Unit/ArrowDbCore.Tests.Unit.csproj" />
   </Folder>
