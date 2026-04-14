@@ -8,6 +8,10 @@
     <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
     <AnalysisLevel>latest-recommended</AnalysisLevel>
+    <IncludeSymbols>true</IncludeSymbols>
+    <IncludeSource>true</IncludeSource>
+    <SymbolPackageFormat>snupkg</SymbolPackageFormat>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
     <GenerateDocumentationFile>True</GenerateDocumentationFile>
     <PackageId>ArrowDb.DependencyInjection</PackageId>
     <Title>ArrowDb.DependencyInjection</Title>
@@ -22,6 +26,15 @@
     <Authors>David Shnayder</Authors>
     <Copyright>David Shnayder</Copyright>
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
+    <SynchReleaseVersion>false</SynchReleaseVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <DebugType>portable</DebugType>
+    <EmbedUntrackedSources>true</EmbedUntrackedSources>
+    <AllowedOutputExtensionsInPackageBuildOutputFolder>
+      $(AllowedOutputExtensionsInPackageBuildOutputFolder);.pdb
+    </AllowedOutputExtensionsInPackageBuildOutputFolder>
   </PropertyGroup>
 
   <ItemGroup>
