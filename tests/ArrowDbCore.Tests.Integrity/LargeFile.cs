@@ -66,14 +66,14 @@ public class LargeFile
     [Fact]
     public async Task LargeFile_Passes_OneReadWriteCycle_FileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "long-test-file-serializer.db");
         await LargeFile_Passes_OneReadWriteCycle(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
     public async Task LargeFile_Passes_OneReadWriteCycle_AesFileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("long-test-aes-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "long-test-aes-file-serializer.db");
         using var aes = Aes.Create();
         aes.GenerateKey();
         aes.GenerateIV();

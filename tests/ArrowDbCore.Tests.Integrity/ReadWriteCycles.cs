@@ -61,14 +61,14 @@ public class ReadWriteCycles
     [Fact]
     public async Task FileIO_Passes_ReadWriteCycles_FileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("rdc-test-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "rdc-test-file-serializer.db");
         await FileIO_Passes_ReadWriteCycles(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
     public async Task FileIO_Passes_ReadWriteCycles_AesFileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("rdc-test-aes-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "rdc-test-aes-file-serializer.db");
         using var aes = Aes.Create();
         aes.GenerateKey();
         aes.GenerateIV();
