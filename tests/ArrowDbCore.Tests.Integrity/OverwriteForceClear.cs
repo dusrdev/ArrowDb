@@ -64,14 +64,14 @@ public class OverwriteForceClear
     [Fact]
     public async Task SerializeOverwritesExistingFile_FileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("overwrite-test-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "overwrite-test-file-serializer.db");
         await SerializeOverwritesExistingFile(path, () => ArrowDb.CreateFromFile(path));
     }
 
     [Fact]
     public async Task SerializeOverwritesExistingFile_AesFileSerializer()
     {
-        var path = Sharpify.Utils.Env.PathInBaseDirectory("overwrite-test-aes-file-serializer.db");
+        var path = Path.Join(AppDomain.CurrentDomain.BaseDirectory, "overwrite-test-aes-file-serializer.db");
         using var aes = Aes.Create();
         aes.GenerateKey();
         aes.GenerateIV();
